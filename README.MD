@@ -24,7 +24,8 @@
         - [ ] Impedir que os programas acessem espaços de memória indevidos.
         - [ ] Fornecer base e limit registers.
         - [ ] Escolher o lugar para os programas na memória.
-![](img/tanenbaum-base-limit.png)
+
+            ![](img/tanenbaum-base-limit.png)
         - [ ] Fazer o OS ser executado tal qual um programa comum (uma vez por ciclo).
 
 - UI
