@@ -1,0 +1,9 @@
+@startuml MEMSIM
+class Memory {
+    +byte[] main_memory
+    -int next_allocation_index
+    +void swap_in(program: Program)
+}
+
+Memory --> Program : uses
+@enduml
