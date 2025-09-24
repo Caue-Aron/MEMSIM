@@ -1,6 +1,6 @@
-import numpy as np
+from numpy import uint16
 
-byte = np.uint16
+byte = uint16
 NULL = byte(0x00)
 
 def byte_str(data:byte):

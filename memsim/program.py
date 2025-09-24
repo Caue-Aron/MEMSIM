@@ -1,9 +1,10 @@
-from .util import byte, NULL
+from .util import *
 import numpy as np
+from numpy.typing import NDArray
 
 # Container class
 class Program:
-    def __init__(self, byte_data:np.array):
+    def __init__(self, byte_data:list):
         self.bytes = np.array(byte(byte_data), dtype=byte)
     
     def stream_bytes(self):

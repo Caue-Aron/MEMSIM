@@ -2,13 +2,21 @@
 class Memory {
     - byte[] main_memory
     - int next_allocation_index
-    - SafeList[Dict[str, int]] memory_layout
+    - Segment[] memory_layout
+    - int memory_size
 
+    + Memory(size: int)
     + swap_in(program: Program): void
     + swap_out(layout_index: int): void
     + get_bytes(): byte[]
-    + get_memory_layout(): SafeList[Dict[str, int]]
+    + get_memory_layout(): Segment
     + shrink(): void
+}
+
+class Segment {
+    - string type
+    - int index
+    - int size
 }
 
 class SafeList <<utility>> {
@@ -25,4 +33,5 @@ class Program {
 SafeList --|> list
 Memory --> Program : uses
 Memory --> SafeList : uses
+Memory --> Segment : contains
 @enduml
