@@ -1,8 +1,22 @@
 @startuml MEMSIM
 class Memory {
-    +byte[] main_memory
-    -int next_allocation_index
-    +void swap_in(program: Program)
+    - byte[] main_memory
+    - int next_allocation_index
+    - List<Tuple<int>> memory_layout
+
+    - save_context(): void
+    + swap_in(program: Program): void
+    + swap_out(program_start_index: int): void
+    + get_bytes(): byte[]
+    + get_memory_layout(): List<Set<int>>
+    + shrink(): void
+}
+
+class Program {
+    - byte[] bytes
+
+    + Program(byte: bytes[])
+    + stream(): byte[]
 }
 
 Memory --> Program : uses
