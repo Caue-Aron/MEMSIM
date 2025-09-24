@@ -1,9 +1,12 @@
 # MEMSIM
 
 ## API
-### `get_memory_layout() -> List[Tuple[int, int]]`
+### `get_memory_layout() -> List[Dict[str, int]]`
 
-Retorna um array contendo os programas e buracos da memória no formato (início,comprimento).
+Retorna um array contendo os programas e buracos da memória
+- **type (str):** Se é um buraco ou um programa.
+- **index (int):** O indíce de início do bloco.
+- **size (int):** O tamanho do bloco.
 
 
 ## TODO

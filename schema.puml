@@ -2,21 +2,27 @@
 class Memory {
     - byte[] main_memory
     - int next_allocation_index
-    - List<Tuple<int>> memory_layout
+    - SafeList[Dict[str, int]] memory_layout
 
     + swap_in(program: Program): void
     + swap_out(layout_index: int): void
     + get_bytes(): byte[]
-    + get_memory_layout(): List[Dict[str, int]]
+    + get_memory_layout(): SafeList[Dict[str, int]]
     + shrink(): void
+}
+
+class SafeList <<utility>> {
+    + __getitem__(index: int) : Any
 }
 
 class Program {
     - byte[] bytes
 
-    + Program(byte: bytes[])
+    + Program(bytes: byte[])
     + stream(): byte[]
 }
 
+SafeList --|> list
 Memory --> Program : uses
+Memory --> SafeList : uses
 @enduml

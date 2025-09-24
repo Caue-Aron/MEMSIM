@@ -1,16 +1,21 @@
-from util import *
 import numpy as np
+from .util import byte, NULL
 from .program import Program
-from util import MEM_SIZE, NULL, byte
+from .safe_list import SafeList
 from typing import List, Dict, Tuple
 
 HOLE = "H"
 PROGRAM = "P"
 
 class Memory:
-    def __init__(self):
-        self.main_memory = np.array([byte(NULL) for _ in range(MEM_SIZE)], dtype=byte)
-        self.memory_layout = [{"type":HOLE, "index": 0, "size": MEM_SIZE}]
+    def __init__(self, mem_size: int = np.iinfo(byte).max + 1):
+        if mem_size > 0:
+            self.mem_size = mem_size
+        else:
+            self.mem_size = np.iinfo(byte).max + 1
+
+        self.main_memory = np.array([byte(NULL) for _ in range(self.mem_size)], dtype=byte)
+        self.memory_layout = SafeList([{"type":HOLE, "index": 0, "size": self.mem_size}])
 
     def swap_in(self, program:Program):
         program_index, program_size = self.set_program_layout(program)
@@ -24,12 +29,18 @@ class Memory:
             hole_to_grow["index"] = program_to_remove["index"]
             hole_to_grow["size"] = program_to_remove["size"] + hole_to_grow["size"]
             
-            self.main_memory[program_to_remove["index"]:program_to_remove["index"]+program_to_remove["size"]] = NULL
+            self.memory_layout.pop(layout_index)
+
+        elif self.memory_layout[layout_index-1]["type"] == HOLE:
+            hole_to_grow = self.memory_layout[layout_index-1]
+            hole_to_grow["size"] = program_to_remove["size"] + hole_to_grow["size"]
+
             self.memory_layout.pop(layout_index)
 
         else:
             program_to_remove["type"] = HOLE
-            self.main_memory[program_to_remove["index"]:program_to_remove["index"]+program_to_remove["size"]] = NULL
+        
+        self.main_memory[program_to_remove["index"]:program_to_remove["index"]+program_to_remove["size"]] = NULL
 
     def get_bytes(self) -> np.array:
         return self.main_memory.copy()

@@ -1,5 +1,4 @@
-import util
-from util import MEM_SIZE, NULL, byte
+from .util import byte, NULL
 import numpy as np
 
 # Container class
