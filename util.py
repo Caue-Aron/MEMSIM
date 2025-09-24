@@ -1,6 +1,5 @@
 import numpy as np
 
-
 byte = np.uint16
 
 def byte_str(data:byte):

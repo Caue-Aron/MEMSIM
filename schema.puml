@@ -4,11 +4,10 @@ class Memory {
     - int next_allocation_index
     - List<Tuple<int>> memory_layout
 
-    - save_context(): void
     + swap_in(program: Program): void
     + swap_out(program_start_index: int): void
     + get_bytes(): byte[]
-    + get_memory_layout(): List<Set<int>>
+    + get_memory_layout(): List[Dict[str, int]]
     + shrink(): void
 }
 
