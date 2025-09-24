@@ -5,7 +5,7 @@ class Memory {
     - List<Tuple<int>> memory_layout
 
     + swap_in(program: Program): void
-    + swap_out(program_start_index: int): void
+    + swap_out(layout_index: int): void
     + get_bytes(): byte[]
     + get_memory_layout(): List[Dict[str, int]]
     + shrink(): void

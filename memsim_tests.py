@@ -9,6 +9,9 @@ if __name__ == "__main__":
     mem.swap_in(Program([0x01, 0x01, 0x01]))
     mem.swap_in(Program([0x03, 0x03, 0x03, 0x03]))
 
-    [print(util.byte_str(mem.get_bytes()[i])) for i in range(12)]
-    print()
-    [print(i) for i in mem.get_memory_layout()]
+    mem.swap_out(0)
+    mem.swap_out(1)
+
+    mem.swap_in(Program([0x04, 0x04, 0x04, 0x04, 0x04]))
+
+    pass
