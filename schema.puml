@@ -1,9 +1,8 @@
 @startuml MEMSIM
 class Memory {
-    - byte[] main_memory
-    - int next_allocation_index
-    - Segment[] memory_layout
     - int memory_size
+    - byte[] main_memory
+    - Segment[] memory_layout
 
     + Memory(size: int)
     + swap_in(program: Program): void
@@ -14,9 +13,9 @@ class Memory {
 }
 
 class Segment {
-    - string type
-    - int index
-    - int size
+    + string type {readOnly}
+    + int index {readOnly}
+    + int size {readOnly}
 }
 
 class SafeList <<utility>> {

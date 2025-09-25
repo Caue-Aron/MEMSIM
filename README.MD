@@ -1,14 +1,5 @@
 # MEMSIM
 
-## API
-### `get_memory_layout() -> List[Dict[str, int]]`
-
-Retorna um array contendo os programas e buracos da memória
-- **type (str):** Se é um buraco ou um programa.
-- **index (int):** O indíce de início do bloco.
-- **size (int):** O tamanho do bloco.
-
-
 ## TODO
 - Conversar com o professor sobre
 - Decidir as tarefas de cada integrante da equipe
@@ -16,11 +7,11 @@ Retorna um array contendo os programas e buracos da memória
 - [ ] Simulador
     - [ ] Memória
         - [x] Array de bytes para acomodar os programas.
-        - [ ] Layout da memória
+        - [x] Layout da memória.
         - [ ] Manipulação de Memória.
-            - [ ] Memory Swap (com espaço extra para crescimento de programas).
+            - [x] Memory Swap.
                 - [ ] Salvar estados dos programas.
-            - [ ] Shrink.
+            - [-] Shrink.
     - [ ] Programas
         - [ ] Inserção/remoção de bytes no programa.
         - [ ] Todos os programas rodam em sequência na sequência em que estão na memória.
