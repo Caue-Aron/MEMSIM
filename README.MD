@@ -11,7 +11,7 @@
         - [ ] Manipulação de Memória.
             - [x] Memory Swap.
                 - [ ] Salvar estados dos programas.
-            - [-] Shrink.
+            - [ ] Shrink.
     - [ ] Programas
         - [ ] Inserção/remoção de bytes no programa.
         - [ ] Todos os programas rodam em sequência na sequência em que estão na memória.

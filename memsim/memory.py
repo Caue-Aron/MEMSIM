@@ -19,13 +19,13 @@ class Segment:
         return f"{self.type}, {self.index}, {self.size}"
 
 class Memory:
-    def __init__(self, memory_size:int=np.iinfo(Byte).max+1):
+    def __init__(self, memory_size:int=Byte.MAX+1):
         if memory_size > 0:
             self.memory_size = memory_size
         else:
-            self.memory_size = np.iinfo(Byte).max + 1
+            self.memory_size = Byte.MAX + 1
 
-        self.main_memory = [Byte(NULL) for _ in range(self.memory_size)]
+        self.main_memory = [NULL for _ in range(self.memory_size)]
         self.memory_layout = SafeList([Segment(HOLE, 0, self.memory_size)])
         self.persistent_memory = []
 

@@ -1,5 +1,4 @@
 from .byte import Byte, NULL
-import numpy as np
 from .safe_list import SafeList
 from typing import Dict, List
 
