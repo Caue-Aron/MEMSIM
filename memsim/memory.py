@@ -79,10 +79,13 @@ class Memory:
 
         if combined_hole_size >= p_size:
             self.shrink()
-            self.swap_in(program)
+            return self.get_next_alloc_bock(program)
 
         else:
             raise MSNotEnoughMemory(self.main_memory.copy(), self.memory_layout.copy(), p_size)
+        
+    def get_next_segment(self, index:int, stype:str):
+        return next((i for i in self.memory_layout[index:] if i.type == stype), None)
             
     def shrink(self):
         for layout_index, segment in enumerate(self.memory_layout):
@@ -103,6 +106,7 @@ class Memory:
 
                     self.persistent_memory[:] = [NULL] * len(self.persistent_memory)
 
-                    hole = self.memory_layout.pop(layout_index)
-                    furthest_hole = self.memory_layout[len(self.memory_layout)-1]
-                    furthest_hole.size = furthest_hole.size + hole.size
+                    hole_to_remove = self.memory_layout.pop(layout_index)
+                    next_hole = self.get_next_segment(layout_index, HOLE)
+                    next_hole.size = next_hole.size + hole_to_remove.size
+                    next_hole.index = program_to_move.index + program_size

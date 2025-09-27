@@ -1,15 +1,19 @@
 @startuml MEMSIM
 class Memory {
     - int memory_size
-    - byte[] main_memory
+    - Byte[] main_memory
     - Segment[] memory_layout
 
     + Memory(size: int)
     + swap_in(program: Program): void
     + swap_out(layout_index: int): void
-    + get_bytes(): byte[]
+    + get_bytes(): Byte[]
     + get_memory_layout(): Segment
     + shrink(): void
+}
+
+class Byte <<storage>> {
+    - value: int
 }
 
 class Segment {
@@ -23,14 +27,16 @@ class SafeList <<utility>> {
 }
 
 class Program {
-    - byte[] bytes
+    - Byte[] bytes
 
-    + Program(bytes: byte[])
-    + stream(): byte[]
+    + Program(bytes: int[])
+    + stream(): Byte[]
 }
 
 SafeList --|> list
 Memory --> Program : uses
 Memory --> SafeList : uses
 Memory --> Segment : contains
+Memory --> Byte : uses
+Program --> contains : Byte
 @enduml

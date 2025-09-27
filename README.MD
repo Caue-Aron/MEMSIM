@@ -10,8 +10,9 @@
         - [x] Layout da memória.
         - [ ] Manipulação de Memória.
             - [x] Memory Swap.
+                - [x] Memória "de disco" infinita para armazenar programas temporariamente.
                 - [ ] Salvar estados dos programas.
-            - [ ] Shrink.
+            - [X] Shrink.
     - [ ] Programas
         - [ ] Inserção/remoção de bytes no programa.
         - [ ] Todos os programas rodam em sequência na sequência em que estão na memória.
