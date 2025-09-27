@@ -25,16 +25,22 @@ class Memory:
 
         self.main_memory = [NULL for _ in range(self.memory_size)]
         self.memory_layout = SafeList([Segment(HOLE, 0, self.memory_size)])
-        self.persistent_memory = []
 
     def swap_in(self, program:Program):
         program_index, program_size = self.get_next_alloc_block(program)
         self.main_memory[program_index:program_index+program_size] = program.stream_bytes()
 
-    def swap_out(self, layout_index:int):
+    def swap_out(self, layout_index:int) -> List[Byte]:
         program_to_remove = self.memory_layout[layout_index]
+        
+        if self.memory_layout[layout_index-1].type == HOLE and self.memory_layout[layout_index+1].type == HOLE:
+            program_to_remove.type = HOLE
+            program_to_remove.index = self.memory_layout[layout_index-1].index
+            program_to_remove.size += self.memory_layout[layout_index-1].size + self.memory_layout[layout_index+1].size
+            self.memory_layout.pop(layout_index+1)
+            self.memory_layout.pop(layout_index-1)
 
-        if self.memory_layout[layout_index+1].type == HOLE:
+        elif self.memory_layout[layout_index+1].type == HOLE:
             hole_to_grow = self.memory_layout[layout_index+1]
             hole_to_grow.index = program_to_remove.index
             hole_to_grow.size = program_to_remove.size + hole_to_grow.size
@@ -50,7 +56,10 @@ class Memory:
         else:
             program_to_remove.type = HOLE
         
+        program_bytes = self.main_memory[program_to_remove.index:program_to_remove.index+program_to_remove.size]
         self.main_memory[program_to_remove.index:program_to_remove.index+program_to_remove.size] = [NULL] * program_to_remove.size
+        
+        return program_bytes
 
     def get_bytes(self) -> List[Byte]:
         return self.main_memory.copy()
@@ -102,15 +111,11 @@ class Memory:
                     program_end = program_to_move.index + program_to_move.size
                     program_size = program_to_move.size
 
-                    self.persistent_memory = [NULL for _ in range(program_size)]
-
                     self.persistent_memory[0:program_size] = self.main_memory[program_start:program_end]
                     self.main_memory[program_start:program_end] = [NULL] * program_size
                     program_to_move.index = segment.index
                     
                     self.main_memory[program_to_move.index:program_to_move.index+program_size] = self.persistent_memory[0:program_size]
-
-                    self.persistent_memory[:] = [NULL] * len(self.persistent_memory)
 
                     hole_to_remove = self.memory_layout.pop(layout_index)
                     next_hole = self.get_next_segment(layout_index, HOLE)

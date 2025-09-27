@@ -1,11 +1,9 @@
 from .byte import Byte, NULL
 from typing import List
 from .memory import Memory, HOLE, PROGRAM, Segment
-from .ram import RAM
-from .disc import Disc
 from .program import Program
 from .memory_errors import MSNotEnoughMemory
 
-class OS:
-    def __init__(self):
-        pass
+class RAM(Memory):
+    def __init__(self, memory_size = Byte.MAX+1):
+        super().__init__(memory_size)
