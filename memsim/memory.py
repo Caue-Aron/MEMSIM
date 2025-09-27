@@ -2,7 +2,7 @@ import numpy as np
 from .byte import Byte, NULL
 from .program import Program
 from .safe_list import SafeList
-from typing import List, Dict
+from typing import List
 from .memory_errors import MSNotEnoughMemory
 
 HOLE = "H"
@@ -30,7 +30,7 @@ class Memory:
         self.persistent_memory = []
 
     def swap_in(self, program:Program):
-        program_index, program_size = self.get_next_alloc_bock(program)
+        program_index, program_size = self.get_next_alloc_block(program)
         self.main_memory[program_index:program_index+program_size] = program.stream_bytes()
 
     def swap_out(self, layout_index:int):
@@ -54,17 +54,16 @@ class Memory:
         
         self.main_memory[program_to_remove.index:program_to_remove.index+program_to_remove.size] = [NULL] * program_to_remove.size
 
-    def get_bytes(self) -> np.array:
+    def get_bytes(self) -> List[Byte]:
         return self.main_memory.copy()
 
-    def get_memory_layout(self) -> List[Dict[str, int]]:
+    def get_memory_layout(self) -> List[Segment]:
         return self.memory_layout.copy()
 
-    def get_next_alloc_bock(self, program: Program) -> Segment:
+    def get_next_alloc_block(self, program: Program) -> Segment:
         p_size = len(program.bytes)
         combined_hole_size = 0
 
-        # searches for a hole big enough for the program
         for layout_index, segment in enumerate(self.memory_layout):
             if segment.type == HOLE:
                 if segment.size >= p_size:
@@ -73,19 +72,28 @@ class Memory:
                     segment.index = p_size + segment.index
                     segment.size = segment.size - p_size
                     self.memory_layout.insert(layout_index, program_in_mem)
+                    if segment.size == 0:
+                        self.memory_layout.pop(layout_index+1)
                     return (p_index, p_size)
             
                 combined_hole_size += segment.size
 
         if combined_hole_size >= p_size:
             self.shrink()
-            return self.get_next_alloc_bock(program)
+            return self.get_next_alloc_block(program)
 
         else:
             raise MSNotEnoughMemory(self.main_memory.copy(), self.memory_layout.copy(), p_size)
         
-    def get_next_segment(self, index:int, stype:str):
+    def get_next_segment(self, index:int, stype:str) -> Segment:
         return next((i for i in self.memory_layout[index:] if i.type == stype), None)
+    
+    def get_unallocated_memory(self) -> int:
+        combined_program_memory = sum(
+            segment.size for segment in self.memory_layout if segment.type == PROGRAM
+        )
+
+        return self.memory_size - combined_program_memory
             
     def shrink(self):
         for layout_index, segment in enumerate(self.memory_layout):
@@ -108,5 +116,9 @@ class Memory:
 
                     hole_to_remove = self.memory_layout.pop(layout_index)
                     next_hole = self.get_next_segment(layout_index, HOLE)
-                    next_hole.size = next_hole.size + hole_to_remove.size
-                    next_hole.index = program_to_move.index + program_size
+
+                    if next_hole:
+                        next_hole.size = next_hole.size + hole_to_remove.size
+                        next_hole.index = program_to_move.index + program_size
+                    else:
+                        self.memory_layout.append(Segment(HOLE, program_to_move.index + program_size, self.get_unallocated_memory()))

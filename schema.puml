@@ -2,18 +2,19 @@
 class Memory {
     - int memory_size
     - Byte[] main_memory
-    - Segment[] memory_layout
+    - SafeList<Segment> memory_layout
 
     + Memory(size: int)
     + swap_in(program: Program): void
     + swap_out(layout_index: int): void
     + get_bytes(): Byte[]
-    + get_memory_layout(): Segment
+    + get_memory_layout(): Segment[]
+    + get_unallocated_memory(): int
     + shrink(): void
 }
 
-class Byte <<storage>> {
-    - value: int
+class Byte <<datatype>> {
+    + int value {readOnly}
 }
 
 class Segment {
@@ -33,10 +34,10 @@ class Program {
     + stream(): Byte[]
 }
 
-SafeList --|> list
-Memory --> Program : uses
-Memory --> SafeList : uses
-Memory --> Segment : contains
-Memory --> Byte : uses
-Program --> contains : Byte
+SafeList --> list : wraps
+Memory *-- Program : uses
+Memory *-- SafeList : uses
+Memory *-- Segment : contains
+Memory *-- Byte : contains
+Program *-- Byte : contains
 @enduml
