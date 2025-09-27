@@ -1,4 +1,3 @@
-import numpy as np
 from .byte import Byte, NULL
 from .program import Program
 from .safe_list import SafeList
@@ -7,7 +6,6 @@ from .memory_errors import MSNotEnoughMemory
 
 HOLE = "H"
 PROGRAM = "P"
-np.set_printoptions(formatter={'int': lambda x: f"0x{x:04X}"})
 
 class Segment:
     def __init__(self, stype:str, index:int, size:int):
