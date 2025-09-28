@@ -11,10 +11,21 @@ class Disc(Memory):
 
     def swap_in(self, program:Program):
         program_size = len(program.bytes)
-        if self.get_unallocated_memory() < program_size:
+        free_segment = self.get_next_free_block(program_size)
+
+        if free_segment:
+            super().swap_in(free_segment, program.stream_bytes())
+            
+        else:
             self.expand_disc(program_size)
 
-        super().swap_in(program)
+            super().swap_in(
+                Segment(PROGRAM,
+                        self.memory_layout[len(self.memory_layout)-1].index,
+                        program_size
+                ),
+                program.stream_bytes()
+            )
 
     def expand_disc(self, size:int):
         self.main_memory += [NULL] * size
@@ -27,7 +38,6 @@ class Disc(Memory):
                 further_most_segment.index + further_most_segment.size,
                 size
             ))
-
 
 
     

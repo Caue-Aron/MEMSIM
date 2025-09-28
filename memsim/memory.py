@@ -1,7 +1,7 @@
 from .byte import Byte, NULL
 from .program import Program
 from .safe_list import SafeList
-from typing import List
+from typing import List, Tuple
 from .memory_errors import MSNotEnoughMemory, MSFaultyAccess, MSNoAllocationBlockAvailable
 from .segment import Segment
 
@@ -18,14 +18,19 @@ class Memory:
         self.main_memory = SafeList([NULL for _ in range(self.memory_size)])
         self.memory_layout = SafeList([Segment(HOLE, 0, self.memory_size)])
 
-    def swap_in(self, index:int, size:int, program_bytes:list[Byte]):
+    def swap_in(self, block:Segment, program_bytes:list[Byte]):
+        block_end = block.index + block.size
+        index = block.index
+        size = block.size
+
         for other_programs in self.memory_layout:
             if other_programs.type == PROGRAM:
                 other_program_start = other_programs.index
                 other_program_end = other_programs.index + other_programs.size
-                if other_program_start < index < other_program_end or other_program_start < index + size < other_program_end:
+
+                if other_program_start < index < other_program_end or other_program_start < block_end < other_program_end:
                     raise MSFaultyAccess(self.main_memory, self.memory_layout, Segment(PROGRAM, index, size))
-                elif index < other_program_start < index + size or index < other_program_end < index + size:
+                elif index < other_program_start < block_end or index < other_program_end < block_end:
                     raise MSFaultyAccess(self.main_memory, self.memory_layout, Segment(PROGRAM, index, size))
         
         if self.get_unallocated_memory() < size:
@@ -37,11 +42,11 @@ class Memory:
         segment = None
         for next_layout_index, segment in enumerate(self.memory_layout):
             segment_end = segment.index + segment.size
-            if segment.type == HOLE and segment.index <= index <= segment_end and segment.index <= index + size <= segment_end:
+            if segment.type == HOLE and segment.index <= index <= segment_end and segment.index <= block_end <= segment_end:
                     if segment.index == index:
                         hole_before = False
 
-                    if segment_end == index + size:
+                    if segment_end == block_end:
                         hole_after = False
 
                     break
@@ -62,31 +67,21 @@ class Memory:
 
     def swap_out(self, layout_index:int) -> List[Byte]:
         program_to_remove = self.memory_layout[layout_index]
+        program_bytes = self.main_memory[program_to_remove.index:program_to_remove.index+program_to_remove.size]
+
+        next_segment = self.memory_layout[layout_index+1]
+        prev_segment = self.memory_layout[layout_index-1]
         
-        if self.memory_layout[layout_index-1].type == HOLE and self.memory_layout[layout_index+1].type == HOLE:
-            program_to_remove.type = HOLE
-            program_to_remove.index = self.memory_layout[layout_index-1].index
-            program_to_remove.size += self.memory_layout[layout_index-1].size + self.memory_layout[layout_index+1].size
+        if next_segment.type == HOLE:
+            program_to_remove.size = program_to_remove.size + next_segment.size
             self.memory_layout.pop(layout_index+1)
+
+        if prev_segment.type == HOLE:
+            program_to_remove.index = prev_segment.index
             self.memory_layout.pop(layout_index-1)
 
-        elif self.memory_layout[layout_index+1].type == HOLE:
-            hole_to_grow = self.memory_layout[layout_index+1]
-            hole_to_grow.index = program_to_remove.index
-            hole_to_grow.size = program_to_remove.size + hole_to_grow.size
-            
-            self.memory_layout.pop(layout_index)
-
-        elif self.memory_layout[layout_index-1].type == HOLE:
-            hole_to_grow = self.memory_layout[layout_index-1]
-            hole_to_grow.size = program_to_remove.size + hole_to_grow.size
-
-            self.memory_layout.pop(layout_index)
-
-        else:
-            program_to_remove.type = HOLE
+        program_to_remove.type = HOLE
         
-        program_bytes = self.main_memory[program_to_remove.index:program_to_remove.index+program_to_remove.size]
         self.main_memory[program_to_remove.index:program_to_remove.index+program_to_remove.size] = [NULL] * program_to_remove.size
         
         return program_bytes
@@ -97,7 +92,7 @@ class Memory:
     def get_memory_layout(self) -> List[Segment]:
         return (layout for layout in self.memory_layout)
 
-    def get_next_alloc_block(self, size:int) -> Segment:
+    def get_next_free_block(self, size:int) -> Segment:
         for segment in self.memory_layout:
             if segment.type == HOLE and segment.size >= size:
                     return Segment(HOLE, segment.index, size)
@@ -107,8 +102,8 @@ class Memory:
     def get_next_segment(self, index:int, stype:str) -> Segment:
         return next((i for i in self.memory_layout[index:] if i.type == stype), None)
 
-    def get_last_segment(self, stype:str) -> Segment:
-        return self.memory_layout[len(self.memory_layout)-1]
+    def get_all_segments_of_type(self, stype:str, index:int=0) -> List[Tuple[int, Segment]]:
+        return [(layout_index, segment) for layout_index, segment in enumerate(self.memory_layout[index:]) if segment.type == stype]
     
     def get_unallocated_memory(self) -> int:
         combined_program_memory = sum(

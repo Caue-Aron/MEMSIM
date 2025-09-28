@@ -6,6 +6,8 @@ from sys import argv
 if __name__ == "__main__":
     os = OS(int(argv[1]))
     os.load_program_into_ram(Program([0x11] * 4))
-    # os.load_program_into_ram(Program([0x22] * 4))
+    os.swap_ram_to_disc(0)
+    os.load_program_into_ram(Program([0x22] * 4))
+    os.swap_disc_to_ram(0)
 
     pass

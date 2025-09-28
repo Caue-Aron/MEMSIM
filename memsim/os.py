@@ -16,22 +16,32 @@ class OS:
         p_bytes = program.stream_bytes()
         p_size = len(p_bytes)
 
-        memory_block = self.ram.get_next_alloc_block(p_size)
-        if not memory_block:
-            raise MSNotEnoughMemory(self.ram.main_memory, self.ram.memory_layout, p_size)
+        memory_block = self.ram.get_next_free_block(p_size)
+        if memory_block:
+            self.ram.swap_in(Segment(PROGRAM, memory_block.index, memory_block.size), p_bytes)
         else:
-            self.ram.swap_in(0x04, 0x08, p_bytes)
+            raise MSNotEnoughMemory(self.ram.main_memory, self.ram.memory_layout, p_size)
+
+    def swap_ram_to_disc(self, program_index:int):
+        layout_index, program_to_remove = self.ram.get_all_segments_of_type(PROGRAM)[program_index]
+        bytes_to_transfer = self.ram.swap_out(layout_index)
+        self.disc.swap_in(Program(bytes_to_transfer))
+
+    def swap_disc_to_ram(self, program_index:int):
+        layout_index, program_to_remove = self.disc.get_all_segments_of_type(PROGRAM)[program_index]
+        bytes_to_transfer = self.disc.swap_out(layout_index)
+        self.load_program_into_ram(Program(bytes_to_transfer))
 
     def shrink_ram(self):
         combined_program_size = sum(program.size for program in self.disc.get_memory_layout() if program.type == PROGRAM)
         swap_out_index = 0
 
         try:
-            swap_out_index = self.disc.get_next_alloc_block(combined_program_size).index
+            swap_out_index = self.disc.get_next_free_block(combined_program_size).index
 
         except MSNotEnoughMemory:
             self.disc.expand_disc(combined_program_size)
-            swap_out_index = self.disc.get_next_alloc_block(combined_program_size).index
+            swap_out_index = self.disc.get_next_free_block(combined_program_size).index
 
         for program in self.ram.get_memory_layout():
             if program.type == PROGRAM:
