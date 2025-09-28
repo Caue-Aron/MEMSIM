@@ -3,15 +3,15 @@ from typing import List
 from .memory import Memory, HOLE, PROGRAM, Segment
 from .program import Program
 from .memory_errors import MSNotEnoughMemory
+from .segment import Segment
 
 class Disc(Memory):
     def __init__(self):
-        super().__init__(8)
+        super().__init__(Byte.MAX * 2)
 
     def swap_in(self, program:Program):
         program_size = len(program.bytes)
         if self.get_unallocated_memory() < program_size:
-            self.shrink()
             self.expand_disc(program_size)
 
         super().swap_in(program)

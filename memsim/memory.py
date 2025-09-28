@@ -2,19 +2,11 @@ from .byte import Byte, NULL
 from .program import Program
 from .safe_list import SafeList
 from typing import List
-from .memory_errors import MSNotEnoughMemory
+from .memory_errors import MSNotEnoughMemory, MSFaultyAccess, MSNoAllocationBlockAvailable
+from .segment import Segment
 
 HOLE = "H"
 PROGRAM = "P"
-
-class Segment:
-    def __init__(self, stype:str, index:int, size:int):
-        self.type = stype
-        self.index = index
-        self.size = size
-
-    def __repr__(self):
-        return f"{self.type}, {self.index}, {self.size}"
 
 class Memory:
     def __init__(self, memory_size:int=Byte.MAX+1):
@@ -23,12 +15,50 @@ class Memory:
         else:
             self.memory_size = Byte.MAX + 1
 
-        self.main_memory = [NULL for _ in range(self.memory_size)]
+        self.main_memory = SafeList([NULL for _ in range(self.memory_size)])
         self.memory_layout = SafeList([Segment(HOLE, 0, self.memory_size)])
 
-    def swap_in(self, program:Program):
-        program_index, program_size = self.get_next_alloc_block(program)
-        self.main_memory[program_index:program_index+program_size] = program.stream_bytes()
+    def swap_in(self, index:int, size:int, program_bytes:list[Byte]):
+        for other_programs in self.memory_layout:
+            if other_programs.type == PROGRAM:
+                other_program_start = other_programs.index
+                other_program_end = other_programs.index + other_programs.size
+                if other_program_start < index < other_program_end or other_program_start < index + size < other_program_end:
+                    raise MSFaultyAccess(self.main_memory, self.memory_layout, Segment(PROGRAM, index, size))
+                elif index < other_program_start < index + size or index < other_program_end < index + size:
+                    raise MSFaultyAccess(self.main_memory, self.memory_layout, Segment(PROGRAM, index, size))
+        
+        if self.get_unallocated_memory() < size:
+            raise MSNotEnoughMemory(self.main_memory, self.memory_layout, size)
+        
+        next_layout_index = 0
+        hole_before = True
+        hole_after = True
+        segment = None
+        for next_layout_index, segment in enumerate(self.memory_layout):
+            segment_end = segment.index + segment.size
+            if segment.type == HOLE and segment.index <= index <= segment_end and segment.index <= index + size <= segment_end:
+                    if segment.index == index:
+                        hole_before = False
+
+                    if segment_end == index + size:
+                        hole_after = False
+
+                    break
+        else:
+            raise MSNoAllocationBlockAvailable(self.main_memory, self.memory_layout, Segment(PROGRAM, index, size))
+        
+        if hole_after:
+            self.memory_layout.insert(next_layout_index+1, Segment(HOLE, index+size, (segment.index + segment.size) - (index+size)))
+
+        if hole_before:
+            self.memory_layout.insert(next_layout_index, Segment(HOLE, segment.index, index - segment.index))
+        
+        segment.type = PROGRAM
+        segment.size = size
+        segment.index = index
+
+        self.main_memory[index:index+size] = program_bytes
 
     def swap_out(self, layout_index:int) -> List[Byte]:
         program_to_remove = self.memory_layout[layout_index]
@@ -65,35 +95,20 @@ class Memory:
         return self.main_memory.copy()
 
     def get_memory_layout(self) -> List[Segment]:
-        return self.memory_layout.copy()
+        return (layout for layout in self.memory_layout)
 
-    def get_next_alloc_block(self, program: Program) -> Segment:
-        p_size = len(program.bytes)
-        combined_hole_size = 0
+    def get_next_alloc_block(self, size:int) -> Segment:
+        for segment in self.memory_layout:
+            if segment.type == HOLE and segment.size >= size:
+                    return Segment(HOLE, segment.index, size)
 
-        for layout_index, segment in enumerate(self.memory_layout):
-            if segment.type == HOLE:
-                if segment.size >= p_size:
-                    program_in_mem = Segment(PROGRAM, segment.index, p_size)
-                    p_index = segment.index
-                    segment.index = p_size + segment.index
-                    segment.size = segment.size - p_size
-                    self.memory_layout.insert(layout_index, program_in_mem)
-                    if segment.size == 0:
-                        self.memory_layout.pop(layout_index+1)
-                    return (p_index, p_size)
-            
-                combined_hole_size += segment.size
-
-        if combined_hole_size >= p_size:
-            self.shrink()
-            return self.get_next_alloc_block(program)
-
-        else:
-            raise MSNotEnoughMemory(self.main_memory.copy(), self.memory_layout.copy(), p_size)
+        return None
         
     def get_next_segment(self, index:int, stype:str) -> Segment:
         return next((i for i in self.memory_layout[index:] if i.type == stype), None)
+
+    def get_last_segment(self, stype:str) -> Segment:
+        return self.memory_layout[len(self.memory_layout)-1]
     
     def get_unallocated_memory(self) -> int:
         combined_program_memory = sum(
