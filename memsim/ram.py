@@ -5,5 +5,5 @@ from .program import Program
 from .memory_errors import MSNotEnoughMemory
 
 class RAM(Memory):
-    def __init__(self, memory_size = Byte.MAX+1):
+    def __init__(self, memory_size:Byte.dtype = Byte.MAX+1):
         super().__init__(memory_size)

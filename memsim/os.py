@@ -8,7 +8,7 @@ from .segment import Segment, PROGRAM, HOLE
 from .memory import Memory
 
 class OS:
-    def __init__(self, ram_size=Byte.MAX+1):
+    def __init__(self, ram_size:Byte.dtype=Byte.MAX+1):
         self.disc = Disc()
         self.ram = RAM(ram_size)
 

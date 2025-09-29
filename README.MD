@@ -5,13 +5,14 @@
 - Decidir as tarefas de cada integrante da equipe
 
 - [ ] Simulador
-    - [ ] Memória
+    - [x] OS
+    - [x] Memória (RAM e Disco)
         - [x] Array de bytes para acomodar os programas.
         - [x] Layout da memória.
-        - [ ] Manipulação de Memória.
+        - [x] Manipulação de Memória.
             - [x] Memory Swap.
                 - [x] Memória "de disco" infinita para armazenar programas temporariamente.
-                - [ ] Salvar estados dos programas.
+                - [x] Salvar estados dos programas.
             - [X] Shrink.
     - [ ] Programas
         - [ ] Inserção/remoção de bytes no programa.
