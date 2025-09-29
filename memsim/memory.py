@@ -1,12 +1,8 @@
 from .byte import Byte, NULL
-from .program import Program
 from .safe_list import SafeList
 from typing import List, Tuple
 from .memory_errors import MSNotEnoughMemory, MSFaultyAccess, MSNoAllocationBlockAvailable
-from .segment import Segment
-
-HOLE = "H"
-PROGRAM = "P"
+from .segment import Segment, PROGRAM, HOLE
 
 class Memory:
     def __init__(self, memory_size:int=Byte.MAX+1):
@@ -68,6 +64,8 @@ class Memory:
     def swap_out(self, layout_index:int) -> List[Byte]:
         program_to_remove = self.memory_layout[layout_index]
         program_bytes = self.main_memory[program_to_remove.index:program_to_remove.index+program_to_remove.size]
+        self.main_memory[program_to_remove.index:program_to_remove.index+program_to_remove.size] = [NULL] * program_to_remove.size
+
 
         next_segment = self.memory_layout[layout_index+1]
         prev_segment = self.memory_layout[layout_index-1]
@@ -103,7 +101,7 @@ class Memory:
         return next((i for i in self.memory_layout[index:] if i.type == stype), None)
 
     def get_all_segments_of_type(self, stype:str, index:int=0) -> List[Tuple[int, Segment]]:
-        return [(layout_index, segment) for layout_index, segment in enumerate(self.memory_layout[index:]) if segment.type == stype]
+        return ((layout_index, segment) for layout_index, segment in enumerate(self.memory_layout[index:]) if segment.type == stype)
     
     def get_unallocated_memory(self) -> int:
         combined_program_memory = sum(
