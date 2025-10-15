@@ -1,0 +1,35 @@
+{
+    "setup": {
+        "ram_size": 32,
+        "disc_size": 65536,
+        "fps_target": 60
+    },
+    "script": {
+        "programs": [
+            {
+                "initialize": {
+                    "header": "0b0000000000000010",
+                    "data": [
+                        "0x0011",
+                        "0x0011",
+                        "0x0011"
+                    ]
+                }
+            },
+            {
+                "initialize": {
+                    "header": "0b0000000000000010",
+                    "data": [
+                        "0x0022",
+                        "0x0022",
+                        "0x0022",
+                        "0x0022",
+                        "0x0022",
+                        "0x0022"
+                    ]
+                },
+                "timestamps": {}
+            }
+        ]
+    }
+}

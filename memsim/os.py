@@ -1,18 +1,23 @@
 from .byte import Byte, NULL
-from typing import List
+from typing import List, Dict, Union
 from .ram import RAM
 from .disc import Disc
 from .program import Program
 from .memory_errors import MSNotEnoughMemory
 from .segment import Segment, PROGRAM, HOLE
 from .memory import Memory
+import bisect
+
+ID_IN_RAM = "id_in_ram"
+ID_IN_DISC = "id_in_disc"
 
 class OS:
     def __init__(self, ram_size=Byte.MAX+1):
         self.disc = Disc()
         self.ram = RAM(ram_size)
+        self.ids = List[Dict[str, Union[int, str]]]
 
-    def load_program(self, memory:Memory, program:Program):
+    def _load_program_mem(self, memory:Memory, program:Program):
         p_bytes = program.stream_bytes()
         p_size = len(p_bytes)
 
@@ -21,12 +26,31 @@ class OS:
             memory.swap_in(Segment(PROGRAM, memory_block.index, memory_block.size), p_bytes)
         else:
             raise MSNotEnoughMemory(memory.main_memory, memory.memory_layout, p_size)
-
-    def load_program_into_ram(self, program:Program):
-        self.load_program(self.ram, program)
         
-    def load_program_into_disc(self, program:Program):
-        self.load_program(self.disc, program)
+    def _search_lowest_id(self):
+        # ids_list = []
+        # for program in self.disc.get_all_segments_of_type(PROGRAM):
+        #     program_id = self.disc.main_memory[program.index]
+        #     ids_list.append(program_id)
+        
+        # for program in self.ram.get_all_segments_of_type(PROGRAM):
+        #     program_id = self.ram.main_memory[program.index]
+        #     ids_list.append(program_id)
+
+        # ids_list = sorted(ids_list)
+        # for i in range(1, ids_list[-1] + 1):
+        #     if i not in ids_list:
+        #         return i
+        if not self.ids:
+            return 0x0
+        
+        
+
+    def load_program(self, program:Program):
+        lowest_id = self._search_lowest_id()
+        self.ids.append({"id": lowest_id, "storage": ID_IN_RAM})
+        self.ids.sort(key=lambda x: x["id"])
+        self._load_program_mem(self.ram, program)
 
     def swap_ram_to_disc(self, program_index:int):
         layout_index = 0
@@ -37,7 +61,7 @@ class OS:
                 break
                         
         bytes_to_transfer = self.ram.swap_out(layout_index)
-        self.load_program_into_disc(Program(bytes_to_transfer))
+        self._load_program_mem(self.disc, Program(bytes_to_transfer))
 
     def swap_disc_to_ram(self, program_index:int):
         layout_index = 0
