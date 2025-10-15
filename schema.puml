@@ -13,6 +13,15 @@ class Memory {
     + shrink(): void
 }
 
+class RAM {
+    + RAM(memory_size: Byte)
+}
+
+class Disc {
+    + Disc()
+    + expand_disc(size: int)
+}
+
 class Byte <<datatype>> {
     + int value {readOnly}
 }
@@ -23,8 +32,19 @@ class Segment {
     + int size {readOnly}
 }
 
+class OS {
+    + OS(ram_size: Byte)
+    + load_program_into_ram(program: Program)
+    + load_program_into_disc(program: Program)
+    + swap_ram_to_disc(program_index: int)
+    + swap_disc_to_ram(program_index: int)
+    + shrink_ram()
+}
+
 class SafeList <<utility>> {
-    + __getitem__(index: int) : Any
+    + __getitem__(index: int): any
+    + __repr__() : str
+    + pop(index: int): any
 }
 
 class Program {
@@ -34,10 +54,14 @@ class Program {
     + stream(): Byte[]
 }
 
-SafeList --> list : wraps
-Memory *-- Program : uses
-Memory *-- SafeList : uses
-Memory *-- Segment : contains
-Memory *-- Byte : contains
-Program *-- Byte : contains
+OS *-- RAM
+OS *-- Disc
+Disc --|> Memory
+RAM --|> Memory
+SafeList --|> list
+Memory *-- Byte
+Program *-- Byte
+Memory *-- Segment
+Memory *-- Program
+Memory *-- SafeList
 @enduml

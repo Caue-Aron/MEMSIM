@@ -12,7 +12,7 @@ ID_IN_RAM = "id_in_ram"
 ID_IN_DISC = "id_in_disc"
 
 class OS:
-    def __init__(self, ram_size=Byte.MAX+1):
+    def __init__(self, ram_size:Byte.dtype=Byte.MAX+1):
         self.disc = Disc()
         self.ram = RAM(ram_size)
         self.ids = List[Dict[str, Union[int, str]]]
