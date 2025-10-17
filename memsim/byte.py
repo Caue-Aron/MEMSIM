@@ -31,6 +31,16 @@ class Byte:
 
     def __repr__(self):
         return str(self)
+    
+    def __int__(self):
+        return int(self._value)
+    
+    def __eq__(self, value):
+        if isinstance(value, int):
+            return self._value == value
+        
+        elif isinstance(value, Byte):
+            return self._value == value._value
 
 
 NULL = Byte(0)

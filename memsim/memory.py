@@ -1,7 +1,7 @@
 from .byte import Byte, NULL
 from .safe_list import SafeList
 from typing import List, Tuple
-from .memory_errors import MSNotEnoughMemory, MSFaultyAccess, MSNoAllocationBlockAvailable
+from .memory_errors import MSNotEnoughMemory, MSFaultyAccess, MSNoAllocationBlockAvailable, MSIDNotFound
 from .segment import Segment, PROGRAM, HOLE
 
 class Memory:
@@ -29,7 +29,7 @@ class Memory:
                 elif index < other_program_start < block_end or index < other_program_end < block_end:
                     raise MSFaultyAccess(self.main_memory, self.memory_layout, Segment(PROGRAM, index, size))
         
-        if self.get_unallocated_memory() < size:
+        if self.get_total_unallocated_memory() < size:
             raise MSNotEnoughMemory(self.main_memory, self.memory_layout, size)
         
         next_layout_index = 0
@@ -61,7 +61,19 @@ class Memory:
 
         self.main_memory[index:index+size] = program_bytes
 
-    def swap_out(self, layout_index:int) -> List[Byte]:
+    def get_program_segment(self, pid:int) -> Segment:
+        for layout_index, program in self.get_all_segments_of_type(PROGRAM):
+            if self.main_memory[program.index] == pid:
+                return (layout_index, program.copy())
+            
+        raise MSIDNotFound(pid, self.main_memory, self.memory_layout)
+            
+    def get_program_id(self, segment:Segment) -> int:
+        return self.main_memory[segment.index]
+
+    def swap_out(self, pid:int) -> List[Byte]:
+        layout_index, _ = self.get_program_segment(pid)
+
         program_to_remove = self.memory_layout[layout_index]
         program_bytes = self.main_memory[program_to_remove.index:program_to_remove.index+program_to_remove.size]
         self.main_memory[program_to_remove.index:program_to_remove.index+program_to_remove.size] = [NULL] * program_to_remove.size
@@ -76,6 +88,7 @@ class Memory:
 
         if prev_segment.type == HOLE:
             program_to_remove.index = prev_segment.index
+            program_to_remove.size += prev_segment.size
             self.memory_layout.pop(layout_index-1)
 
         program_to_remove.type = HOLE
@@ -97,39 +110,15 @@ class Memory:
 
         return None
         
-    def get_next_segment(self, index:int, stype:str) -> Segment:
+    def get_next_segment(self, index:int=0, stype:str=PROGRAM) -> Segment:
         return next((i for i in self.memory_layout[index:] if i.type == stype), None)
 
     def get_all_segments_of_type(self, stype:str, index:int=0) -> List[Tuple[int, Segment]]:
         return ((layout_index, segment) for layout_index, segment in enumerate(self.memory_layout[index:]) if segment.type == stype)
     
-    def get_unallocated_memory(self) -> int:
+    def get_total_unallocated_memory(self) -> int:
         combined_program_memory = sum(
             segment.size for segment in self.memory_layout if segment.type == PROGRAM
         )
 
         return self.memory_size - combined_program_memory
-            
-    def shrink(self):
-        for layout_index, segment in enumerate(self.memory_layout):
-            if segment.type == HOLE:
-                program_to_move = self.memory_layout[layout_index+1]
-                if program_to_move.type == PROGRAM:
-                    program_start = program_to_move.index
-                    program_end = program_to_move.index + program_to_move.size
-                    program_size = program_to_move.size
-
-                    self.persistent_memory[0:program_size] = self.main_memory[program_start:program_end]
-                    self.main_memory[program_start:program_end] = [NULL] * program_size
-                    program_to_move.index = segment.index
-                    
-                    self.main_memory[program_to_move.index:program_to_move.index+program_size] = self.persistent_memory[0:program_size]
-
-                    hole_to_remove = self.memory_layout.pop(layout_index)
-                    next_hole = self.get_next_segment(layout_index, HOLE)
-
-                    if next_hole:
-                        next_hole.size = next_hole.size + hole_to_remove.size
-                        next_hole.index = program_to_move.index + program_size
-                    else:
-                        self.memory_layout.append(Segment(HOLE, program_to_move.index + program_size, self.get_unallocated_memory()))
