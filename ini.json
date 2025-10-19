@@ -2,7 +2,7 @@
     "setup": {
         "ram_size": 32,
         "disc_size": 65536,
-        "fps_target": 60
+        "target_fps": 60
     },
     "script": {
         "programs": [

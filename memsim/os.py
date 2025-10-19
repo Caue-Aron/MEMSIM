@@ -11,8 +11,8 @@ ID_IN_RAM = "id_in_ram"
 ID_IN_DISC = "id_in_disc"
 
 class OS:
-    def __init__(self, ram_size:Byte.dtype=Byte.MAX+1):
-        self.disc = Disc()
+    def __init__(self, ram_size:Byte.dtype=Byte.MAX+1, disc_size:Byte.dtype=Byte.MAX+1):
+        self.disc = Disc(disc_size)
         self.ram = RAM(ram_size)
         self.ids = list()
 

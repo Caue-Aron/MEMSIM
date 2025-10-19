@@ -4,8 +4,8 @@ from .program import Program
 from .segment import Segment, PROGRAM, HOLE
 
 class Disc(Memory):
-    def __init__(self):
-        super().__init__(Byte.MAX * 2)
+    def __init__(self, size:Byte.dtype=Byte.MAX * 2):
+        super().__init__(size)
 
     def expand_disc(self, size:int):
         self.main_memory += [NULL] * size
