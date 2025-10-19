@@ -7,7 +7,7 @@ class Byte:
     MAX = np.iinfo(dtype).max
 
     def __init__(self, value: int = 0):
-        self._value = self.dtype(self._clamp(value))
+        self._value = self.dtype(self._clamp(value if isinstance(value, int) else int(value, 16)))
 
     @classmethod
     def _clamp(cls, value: int) -> int:
