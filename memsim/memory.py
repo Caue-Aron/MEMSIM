@@ -3,6 +3,7 @@ from .safe_list import SafeList
 from typing import List, Tuple
 from .memory_errors import MSNotEnoughMemory, MSFaultyAccess, MSNoAllocationBlockAvailable, MSIDNotFound
 from .segment import Segment, PROGRAM, HOLE
+from .program import Program
 
 class Memory:
     def __init__(self, memory_size:int=Byte.MAX+1):
@@ -61,7 +62,7 @@ class Memory:
 
         self.main_memory[index:index+size] = program_bytes
 
-    def get_program_segment(self, pid:int) -> Segment:
+    def get_program_segment(self, pid:int) -> Tuple[int, Segment]:
         for layout_index, program in self.get_all_segments_of_type(PROGRAM):
             if self.main_memory[program.index] == pid:
                 return (layout_index, program.copy())
@@ -110,8 +111,8 @@ class Memory:
 
         return None
         
-    def get_next_segment(self, index:int=0, stype:str=PROGRAM) -> Segment:
-        return next((i for i in self.memory_layout[index:] if i.type == stype), None)
+    def get_next_segment(self, index:int=0, stype:str=PROGRAM) -> Tuple[int, Segment]:
+        return next(((layout_index, segment) for layout_index, segment in enumerate(self.memory_layout[index:]) if segment.type == stype), None)
 
     def get_all_segments_of_type(self, stype:str, index:int=0) -> List[Tuple[int, Segment]]:
         return ((layout_index, segment) for layout_index, segment in enumerate(self.memory_layout[index:]) if segment.type == stype)
@@ -122,3 +123,20 @@ class Memory:
         )
 
         return self.memory_size - combined_program_memory
+    
+    def grow_segment(self, layout_index:int, p_bytes:Program):
+        size = len(p_bytes.stream_bytes())
+        grow_segment = self.memory_layout[layout_index]
+        shrink_segment = self.memory_layout[layout_index+1]
+
+        if grow_segment is shrink_segment or shrink_segment.type == PROGRAM or grow_segment.type == HOLE:
+            raise MSFaultyAccess([], self.memory_layout, shrink_segment)
+
+        if shrink_segment.size < size:
+            raise MSNotEnoughMemory([], self.memory_layout, size)
+        
+        grow_size = grow_segment.size
+        grow_segment.size += size
+        shrink_segment.index = grow_segment.index + grow_segment.size
+
+        self.main_memory[grow_size:shrink_segment.index] = p_bytes.stream_bytes()

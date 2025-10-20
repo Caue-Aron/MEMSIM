@@ -1,5 +1,5 @@
 from .byte import Byte, NULL
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Tuple
 from .ram import RAM
 from .disc import Disc
 from .program import Program
@@ -53,9 +53,17 @@ class OS:
         bytes_to_transfer = self.ram.swap_out(pid)
         self._load_program_mem(self.disc, Program(bytes_to_transfer))
 
+        for i in self.ids:
+            if i["id"] == pid:
+                i["storage"] = ID_IN_DISC
+
     def _swap_disc_to_ram(self, pid:int):
         bytes_to_transfer = self.disc.swap_out(pid)
         self._load_program_mem(self.ram, Program(bytes_to_transfer))
+        
+        for i in self.ids:
+            if i["id"] == pid:
+                i["storage"] = ID_IN_RAM
 
     def check_id_memory(self, pid:int, memory:Memory) -> bool:
         mem = ID_IN_RAM if isinstance(memory, RAM) else ID_IN_DISC
@@ -90,4 +98,28 @@ class OS:
         for pid in program_ids:
             self._swap_disc_to_ram(pid)
 
-        # raise MSNotEnoughMemory(self.disc.main_memory, self.disc.memory_layout, combined_program_size)
+    def _get_program_segment(self, pid:int) -> Tuple[str, int, Segment]:
+        storage = None
+        layout_index = None
+        segment = None
+
+        for pids in self.ids:
+            storage = pids["storage"] if pids["id"] == pid else None
+
+        if storage == ID_IN_DISC:
+            layout_index, segment = self.disc.get_program_segment(pid)
+
+        elif storage == ID_IN_RAM:
+            layout_index, segment = self.ram.get_program_segment(pid)
+        
+        return storage, layout_index, segment
+
+    def add_bytes_program(self, pid:int, p_bytes:List[Byte]):
+        b_size = len(p_bytes)
+        _, layout_index, segment = self._get_program_segment(pid)
+
+        next_layout_index, next_segment = self.ram.get_next_segment(layout_index, HOLE)
+
+        # confirms the very next segment is a hole
+        if next_layout_index and next_layout_index - layout_index == 1:
+            self.ram.grow_segment(layout_index, Program(p_bytes))

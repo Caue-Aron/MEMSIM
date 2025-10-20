@@ -2,11 +2,11 @@ from .os import OS
 from .program import Program
 import json
 
-
-
 class MEMSIM:
     def __init__(self, config_path:str):
         self.target_fps = None
+        self.os = None
+        self.script = None
 
         programs = None
         ram_size = None
@@ -22,6 +22,27 @@ class MEMSIM:
             programs = config_data["script"]["programs"]
 
         self.os = OS(ram_size, disc_size)
-
+        self.script = dict()
         for program in programs:
-            self.os.load_program(Program(program["initialize"]["data"]))
+            pid = self.os.load_program(Program(program["initialize"]["data"]))
+            self.script[pid] = program["timestamps"]
+
+        self.dt = 0
+
+    def step(self):
+        self.dt += 1
+
+        for pid, program in self.script.items():
+            for timestamps, action in program.items():
+                if self.dt == int(timestamps):
+                    command = next(iter(action))
+                    param = action[command]
+
+                    if command == "insert":
+                        self.os.add_bytes_program(pid, param)
+
+                    if command == "pop":
+                        pass
+
+                    if command == "terminate":
+                        pass

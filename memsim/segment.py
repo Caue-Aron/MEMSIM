@@ -1,5 +1,5 @@
-HOLE = "H"
-PROGRAM = "P"
+HOLE = "HOLE"
+PROGRAM = "PROGRAM"
 
 class Segment:
     def __init__(self, stype:str, index:int, size:int):
