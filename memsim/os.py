@@ -104,7 +104,9 @@ class OS:
         segment = None
 
         for pids in self.ids:
-            storage = pids["storage"] if pids["id"] == pid else None
+            if pids["id"] == pid:
+                storage = pids["storage"]
+                break
 
         if storage == ID_IN_DISC:
             layout_index, segment = self.disc.get_program_segment(pid)
@@ -139,3 +141,10 @@ class OS:
     def pop_bytes_program(self, pid:int, amount:int) -> List[Byte]:
         popped_bytes = self.ram.swap_out(pid)
         self._load_program_mem(self.ram, Program(popped_bytes[:len(popped_bytes)-amount]))
+        return popped_bytes
+
+    def terminate_program(self, pid:int):
+        self.ram.swap_out(pid)
+        for idx, pids in enumerate(self.ids):
+            if pids["id"] == pid:
+                self.ids.pop(idx)

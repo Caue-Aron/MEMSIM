@@ -1,5 +1,6 @@
 from .os import OS
 from .program import Program
+from .memory import Memory
 import json
 
 class MEMSIM:
@@ -29,9 +30,10 @@ class MEMSIM:
 
         self.dt = 0
 
-    def step(self):
-        self.dt += 1
+    def get_state(self) -> Memory:
+        return self.os.ram
 
+    def step(self):
         for pid, program in self.script.items():
             for timestamps, action in program.items():
                 if self.dt == int(timestamps):
@@ -45,4 +47,6 @@ class MEMSIM:
                         self.os.pop_bytes_program(pid, param)
 
                     if command == "terminate":
-                        pass
+                        self.os.terminate_program(pid)
+
+        self.dt += 1
