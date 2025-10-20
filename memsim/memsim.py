@@ -42,7 +42,7 @@ class MEMSIM:
                         self.os.add_bytes_program(pid, param)
 
                     if command == "pop":
-                        pass
+                        self.os.pop_bytes_program(pid, param)
 
                     if command == "terminate":
                         pass

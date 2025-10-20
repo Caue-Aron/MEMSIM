@@ -121,5 +121,21 @@ class OS:
         next_layout_index, next_segment = self.ram.get_next_segment(layout_index, HOLE)
 
         # confirms the very next segment is a hole
-        if next_layout_index and next_layout_index - layout_index == 1:
-            self.ram.grow_segment(layout_index, Program(p_bytes))
+        if next_layout_index and next_layout_index - layout_index == 1 and next_segment.size >= b_size:
+            program_to_grow = self.ram.swap_out(pid)
+            self._load_program_mem(self.ram, Program(program_to_grow + p_bytes))
+
+        else:
+            realloc_size = b_size + segment.size
+            next_segment = self.ram.get_next_free_block(realloc_size)
+            if next_segment:
+                bytes_to_move = self.ram.swap_out(pid) + p_bytes
+                self._load_program_mem(self.ram, Program(bytes_to_move))
+
+            else:
+                pass
+                # self.ram.get_total_unallocated_memory() >= b_size
+    
+    def pop_bytes_program(self, pid:int, amount:int) -> List[Byte]:
+        popped_bytes = self.ram.swap_out(pid)
+        self._load_program_mem(self.ram, Program(popped_bytes[:len(popped_bytes)-amount]))
