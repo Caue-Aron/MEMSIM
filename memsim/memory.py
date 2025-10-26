@@ -116,7 +116,7 @@ class Memory:
     def get_next_segment(self, index:int=0, stype:str=PROGRAM) -> Tuple[int, Segment]:
         return next(((layout_index, segment) for layout_index, segment in enumerate(self.memory_layout[index:]) if segment.type == stype), None)
 
-    def get_all_segments_of_type(self, stype:str, index:int=0) -> Generator[Tuple[int, Segment]]:
+    def get_all_segments_of_type(self, stype:str, index:int=0):
         return ((layout_index, segment) for layout_index, segment in enumerate(self.memory_layout[index:]) if segment.type == stype)
     
     def get_total_unallocated_memory(self) -> int:
