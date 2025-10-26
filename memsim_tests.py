@@ -1,5 +1,6 @@
 import sys
 import time
+import json
 from multiprocessing import Process, Queue, Value
 
 from PyQt6.QtCore import Qt, QTimer
@@ -8,9 +9,9 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtGui import QFont
 
+from memsim.memory_canvas import MemoryCanvas
 
 def run_simulation_worker(output_queue, show_holes_flag):
-    import json
     from memsim.memsim import MEMSIM
     from memsim.segment import PROGRAM, HOLE
 
@@ -28,49 +29,69 @@ def run_simulation_worker(output_queue, show_holes_flag):
         memsim.step()
         state = memsim.get_state()
 
-        ui_lines = []
-        total_size = ram_size
-
-        ui_lines.append(f"Uso de RAM (Tamanho: {total_size})\n" + "=" * 40)
-
         show_holes = show_holes_flag.value
+        segments = []
 
         program_segments_with_idx = state.get_all_segments_of_type(PROGRAM)
 
         all_segments_to_render = []
         for idx, segment in program_segments_with_idx:
-            all_segments_to_render.append((segment, PROGRAM, idx))
+            pid = state.get_program_id(segment)
+            segments.append({
+                "type": "PROGRAM",
+                "pid": f"PID {pid}",
+                "addr": idx,
+                "size": segment.size
+            })
 
         if show_holes:
             hole_segments_with_idx = state.get_all_segments_of_type(HOLE)
             for idx, segment in hole_segments_with_idx:
-                all_segments_to_render.append((segment, HOLE, idx))
+                segments.append({
+                    "type": "HOLE",
+                    "addr": idx,
+                    "size": segment.size
+                })
 
-        all_segments_to_render.sort(key=lambda x: x[2])
+        segments.sort(key=lambda x: x["addr"])
 
-        for segment, seg_type, idx in all_segments_to_render:
-            if seg_type == PROGRAM:
-                pid = state.get_program_id(segment)
+        used_ram = sum(seg["size"] for seg in segments if seg["type"] == "PROGRAM")
+        free_ram = sum(seg["size"] for seg in segments if seg["type"] == "HOLE")
+        total_ram = ram_size
 
-                pid_int = int(pid)
-                start_int = int(idx)
-                size_int = int(segment.size)
-                line = f"PID {pid_int:02d} [Addr: {start_int:03d}, Size: {size_int:03d}] | {'#' * size_int}"
-                ui_lines.append(line)
-            elif seg_type == HOLE:
-                start_int = int(idx)
-                size_int = int(segment.size)
-                line = f"HOLE [Addr: {start_int:03d}, Size: {size_int:03d}] | {'.' * size_int}"
-                ui_lines.append(line)
+        header = (
+            f"Memória atualizada ({len(segments)} segmentos)" +
+            f"\nUso de RAM (Tamanho total: {total_ram} | "
+            f"Em uso: {used_ram} | Livre: {free_ram})\n" +
+            "=" * 40
+        )
 
-        ui_lines.append(f"\n" + "=" * 40 + "\nSimulação em execução...")
-        ui_string = "\n".join(ui_lines)
+        lines = [header]
 
-        output_queue.put(ui_string)
+        for seg in segments:
+            addr = seg["addr"]
+            size = seg["size"]
+            seg_type = seg["type"]
+            pid = seg.get("pid", "")
+
+            if seg_type == "PROGRAM":
+                line = f"{pid} [Addr: {addr:03d}, Size: {size:03d}] | {'#' * min(size, 20)}"
+            else:
+                line = f"HOLE [Addr: {addr:03d}, Size: {size:03d}] | {'.' * min(size, 20)}"
+            lines.append(line)
+
+        ui_string = "\n".join(lines)
+
+
+        output_queue.put({
+            "text": ui_string,
+            "layout": segments,
+            "total_size": ram_size
+        })
 
         if not program_segments_with_idx:
-            output_queue.put("DONE: Simulação encerrada (nenhum programa restante).")
-            _is_running = False
+            output_queue.put({"text": "DONE: Simulação encerrada.", "layout": []})
+            break
 
         time.sleep(1)
 
@@ -90,7 +111,8 @@ class MemSimWindow(QWidget):
 
     def init_ui(self):
         self.setWindowTitle("MEMSIM - Visualizador de Simulação de Memória")
-        self.setGeometry(100, 100, 600, 400)
+        #self.setGeometry(100, 100, 600, 400)
+        self.setGeometry(100, 100, 800, 500)
         layout = QVBoxLayout()
 
         control_layout = QHBoxLayout()
@@ -118,6 +140,10 @@ class MemSimWindow(QWidget):
         self.display_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
 
         layout.addWidget(self.display_label)
+
+        self.memory_canvas = MemoryCanvas()
+        layout.addWidget(self.memory_canvas)
+
         self.setLayout(layout)
         self.show()
 
@@ -157,14 +183,19 @@ class MemSimWindow(QWidget):
             while not self.ui_queue.empty():
                 message = self.ui_queue.get_nowait()
 
-                if message.startswith("DONE:"):
-                    self.display_label.setText(message)
-                    self.stop_simulation()
-                elif message.startswith("ERROR:"):
-                    self.display_label.setText(message)
-                    self.stop_simulation()
+                if isinstance(message, dict):
+                    text = message.get("text", "")
+                    layout = message.get("layout", [])
+                    total_size = message.get("total_size", 1)
+
+                    self.display_label.setText(text)
+                    self.memory_canvas.update_layout(layout, total_size)
+
+                    if text.startswith("DONE"):
+                        self.stop_simulation()
                 else:
-                    self.display_label.setText(message)
+                    self.display_label.setText(str(message))
+
 
         except Exception as e:
             pass
