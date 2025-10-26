@@ -3,9 +3,14 @@ from .program import Program
 from .memory import Memory
 import json
 
+
 class MEMSIM:
-    def __init__(self, config_path:str):
-        self.target_fps = None
+    def __init__(self):
+        self.running = False
+        self.auto = False
+
+    def setup_script(self, config_path:str):
+        self.auto = False
         self.os = None
         self.script = None
 
@@ -15,8 +20,6 @@ class MEMSIM:
 
         with open(config_path, "r") as config_file:
             config_data = json.load(config_file)
-
-            self.target_fps = config_data["setup"]["target_fps"]
 
             ram_size = config_data["setup"]["ram_size"]
             disc_size = config_data["setup"]["disc_size"]
@@ -32,11 +35,11 @@ class MEMSIM:
 
     def get_state(self) -> Memory:
         return self.os.ram
-
-    def step(self):
+    
+    def advance_sim(self, dt:int):
         for pid, program in self.script.items():
             for timestamps, action in program.items():
-                if self.dt == int(timestamps):
+                if dt == int(timestamps):
                     command = next(iter(action))
                     param = action[command]
 
@@ -49,4 +52,18 @@ class MEMSIM:
                     if command == "terminate":
                         self.os.terminate_program(pid)
 
+    def step(self):
+        if self.running:
+            self.advance_sim(self.dt)
+
+            if self.auto:
+                self.prepare_next_step()
+
         self.dt += 1
+        if self.dt == 3:
+            self.stop_simulation()
+
+    def stop_simulation(self):
+        self.os.clear_all()
+        self.script = None
+        self.running = False

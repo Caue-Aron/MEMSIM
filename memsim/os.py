@@ -144,7 +144,17 @@ class OS:
         return popped_bytes
 
     def terminate_program(self, pid:int):
-        self.ram.swap_out(pid)
         for idx, pids in enumerate(self.ids):
+            mem = self.ram if pids["storage"] == ID_IN_RAM else self.disc
             if pids["id"] == pid:
+                mem.swap_out(pid)
                 self.ids.pop(idx)
+                return
+
+    def clear_all(self):
+        for pids in self.ids:
+            mem = self.ram if pids["storage"] == ID_IN_RAM else self.disc
+            mem.swap_out(pids["id"])
+        
+        self.ids.clear()
+    
