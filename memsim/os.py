@@ -24,7 +24,7 @@ class OS:
         if memory_block:
             memory.swap_in(Segment(PROGRAM, memory_block.index, memory_block.size), p_bytes)
 
-        elif memory is self.ram and memory.get_total_unallocated_memory() >= p_bytes:
+        elif memory is self.ram and memory.get_total_unallocated_memory() >= p_size:
             self.shrink_ram()
             self._load_program_mem(memory, program)
             
@@ -120,7 +120,10 @@ class OS:
         b_size = len(p_bytes)
         _, layout_index, segment = self._get_program_segment(pid)
 
-        next_layout_index, next_segment = self.ram.get_next_segment(layout_index, HOLE)
+        next_layout_index = next_segment = None
+        pack = self.ram.get_next_segment(layout_index, HOLE)
+        if pack:
+            next_layout_index, next_segment = pack
 
         # confirms the very next segment is a hole
         if next_layout_index and next_layout_index - layout_index == 1 and next_segment.size >= b_size:

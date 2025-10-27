@@ -10,7 +10,7 @@ POP = "pop"
 TERMINATE = "terminate"
 
 class MEMSIM:
-    def __init__(self, config_path:str, auto_mode:bool=False):
+    def __init__(self, config_path:str, auto_mode:bool=True):
         self.dt = 0
         self.running = True
         self.auto = auto_mode
@@ -36,8 +36,6 @@ class MEMSIM:
                 self.script[pid] = dict()
             else:
                 self.script[pid] = program["timestamps"]
-        with open("script_output.json", "w") as script_output:
-            json.dump(self.script, script_output, indent=4)
 
         self.prepare_next_step()
 
@@ -68,10 +66,14 @@ class MEMSIM:
         ram_size = self.os.ram.memory_size
 
         for idx, program in self.os.ram.get_all_segments_of_type(PROGRAM):
-            # choice = random.choice([INSERT, POP, TERMINATE])
-            # choice = random.choice([INSERT, POP, "", ""])
-            choice = random.choice([INSERT])
+            choices = [INSERT for _ in range(1, int(unallocated_memory / number_programs))]
+            choices.extend([POP for _ in range(1, int(allocated_memory / number_programs))])
+            choices.extend([TERMINATE for _ in range(1, number_programs)])
+            random.shuffle(choices)
+
+            choice = random.choice(choices)
             param = None
+
             if choice == INSERT:
                 allocation_size = random.randrange(1, int(unallocated_memory / number_programs))
                 if allocation_size + allocated_memory >= ram_size:
@@ -81,14 +83,38 @@ class MEMSIM:
                 unallocated_memory -= allocation_size
                 
             elif choice == POP:
-                pass
+                if program.size <= 2:
+                    continue
+
+                param = random.randrange(1, program.size-1)
+                unallocated_memory += param
 
             elif choice == TERMINATE:
                 param = 0
 
+            else:
+                continue
+
             pid = self.os.ram.get_program_id(program)
             self.script[pid][next_df] = dict()
             self.script[pid][next_df][choice] = param
+
+        if number_programs == 0:
+            for i in range(random.randrange(0, int(ram_size/32))):
+                allocation_size = random.randrange(1, int(ram_size/16))
+                if allocation_size + allocated_memory < ram_size:
+                    new_program_bytes = [random.randrange(0, Byte.MAX) for _ in range(0, allocation_size)]
+                    unallocated_memory -= allocation_size
+                    new_pid = self.os.load_program(Program(new_program_bytes))
+                    self.script[new_pid] = dict()
+
+        elif random.randrange(0, number_programs) == 0:
+            allocation_size = random.randrange(1, int(unallocated_memory / number_programs))
+            if allocation_size + allocated_memory < ram_size:
+                new_program_bytes = [random.randrange(0, Byte.MAX) for _ in range(0, allocation_size)]
+                unallocated_memory -= allocation_size
+                new_pid = self.os.load_program(Program(new_program_bytes))
+                self.script[new_pid] = dict()
 
     def step(self):
         if self.running:
@@ -104,3 +130,6 @@ class MEMSIM:
         self.script = None
         self.running = False
         self.auto = False
+        
+        with open("script_output.json", "w") as script_output:
+            json.dump(self.script, script_output, indent=4)
