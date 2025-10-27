@@ -1,0 +1,7 @@
+{
+    "setup": {
+        "ram_size": 128,
+        "disc_size": 262144,
+        "amount_programs": 3
+    }
+}

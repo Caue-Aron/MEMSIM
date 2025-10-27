@@ -72,7 +72,7 @@ class Memory:
         raise MSIDNotFound(pid, self.main_memory, self.memory_layout)
             
     def get_program_id(self, segment:Segment) -> int:
-        return self.main_memory[segment.index]
+        return int(self.main_memory[segment.index])
 
     def swap_out(self, pid:int) -> List[Byte]:
         layout_index, _ = self.get_program_segment(pid)
@@ -125,3 +125,9 @@ class Memory:
         )
 
         return self.memory_size - combined_program_memory
+    
+    def get_total_allocated_memory(self) -> int:
+        return sum(
+            segment.size for segment in self.memory_layout if segment.type == PROGRAM
+        )
+

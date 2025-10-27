@@ -3,8 +3,7 @@ from memsim.segment import PROGRAM, HOLE
 import time
 
 if __name__ == "__main__":
-    memsim = MEMSIM()
-    memsim.setup_script("ini.json")
+    memsim = MEMSIM("ini.json", True)
     while(True):
         memsim.step()
         state = memsim.get_state()
