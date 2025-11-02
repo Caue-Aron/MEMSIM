@@ -56,13 +56,15 @@ def run_simulation_worker(output_queue, show_holes_flag):
         segments.sort(key=lambda x: x["addr"])
 
         used_ram = sum(seg["size"] for seg in segments if seg["type"] == "PROGRAM")
-        free_ram = sum(seg["size"] for seg in segments if seg["type"] == "HOLE")
         total_ram = ram_size
+        free_ram = total_ram - used_ram
+        usage_percent = (used_ram / total_ram) * 100 if total_ram > 0 else 0
 
         header = (
             f"Memória atualizada ({len(segments)} segmentos)" +
             f"\nUso de RAM (Tamanho total: {total_ram} | "
-            f"Em uso: {used_ram} | Livre: {free_ram})\n" +
+            f"Em uso: {used_ram} | Livre: {free_ram} | " +
+            f"{usage_percent:.2f}%)\n" +
             "=" * 40
         )
 
@@ -77,7 +79,7 @@ def run_simulation_worker(output_queue, show_holes_flag):
             if seg_type == "PROGRAM":
                 line = f"{pid} [Addr: {addr:03d}, Size: {size:03d}] | {'#' * min(size, 20)}"
             else:
-                line = f"HOLE [Addr: {addr:03d}, Size: {size:03d}] | {'.' * min(size, 20)}"
+                line = f"HOLE  [Addr: {addr:03d}, Size: {size:03d}] | {'.' * min(size, 20)}"
             lines.append(line)
 
         ui_string = "\n".join(lines)
