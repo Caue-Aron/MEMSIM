@@ -1,131 +1,125 @@
-from PyQt6.QtCore import QObject, Qt, QThread, pyqtSignal
-from PyQt6.QtWidgets import (
-    QApplication, QComboBox, QFileDialog, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
-)
-from pytube import Channel, Playlist, YouTube
-from pytube.exceptions import RegexMatchError
-from sys import exit
+from .theme import create_theme_imgui_light
+from tkinter import Tk, filedialog
+import dearpygui.dearpygui as dpg
+import time
+from memsim.memsim import MEMSIM
+
+def get_left_width():
+    viewport_width = dpg.get_viewport_width()
+    return int(viewport_width * 0.75)
+
+class MEMSIMUI:
+    def __enter__(self):
+        dpg.create_context()
+
+        light_theme = create_theme_imgui_light()
+        dpg.bind_theme(light_theme)
+        
+        width = 1200
+        height = 800
+
+        self.step_speed = 1
+        self.mem_state = None
+        self.memsim = None
+
+        self.chart_window = None
+        self.layout_window = None
+
+        with dpg.window(label="MEMSIM", width=width, height=height) as main_window:
+            self.main_window = main_window
+            
+            with dpg.menu_bar():
+                with dpg.menu(label="Arquivo"):
+                    dpg.add_menu_item(label="Carregar Inicialização", callback=self.load_init_file_callback)
+                    dpg.add_menu_item(label="Salvar Roteiro")
+                    dpg.add_menu_item(label="Salvar Estado de Memória")
+                    dpg.add_separator()
+                    dpg.add_menu_item(label="Sair")
+
+                with dpg.menu(label="Ferramentas"):
+                    dpg.add_menu_item(label="Rodar Simulação", shortcut="| F5")
+                    dpg.add_menu_item(label="Rodar Aleatório", shortcut="| F6")
+                    dpg.add_menu_item(label="Pausar Simulação", shortcut="| F7")
+                    dpg.add_menu_item(label="Parar Simulação", shortcut="| F8")
+                    dpg.add_separator()
+                    
+                    with dpg.menu(label="Definir Velocidade"):
+                        dpg.add_menu_item(label="0.25s", shortcut="| Ctrl+1", callback=self.step_speed_callback, user_data={"step_speed":0.25})
+                        dpg.add_menu_item(label="0.5s", shortcut="| Ctrl+2", callback=self.step_speed_callback, user_data={"step_speed":0.5})
+                        dpg.add_menu_item(label="1s", shortcut="| Ctrl+3", callback=self.step_speed_callback, user_data={"step_speed":1})
+                        dpg.add_menu_item(label="2s", shortcut="| Ctrl+4", callback=self.step_speed_callback, user_data={"step_speed":2})
+                        dpg.add_menu_item(label="3s", shortcut="| Ctrl+5", callback=self.step_speed_callback, user_data={"step_speed":3})
+                        dpg.add_menu_item(label="4s", shortcut="| Ctrl+6", callback=self.step_speed_callback, user_data={"step_speed":4})
+                        dpg.add_menu_item(label="5s", shortcut="| Ctrl+7", callback=self.step_speed_callback, user_data={"step_speed":5})
 
 
-class DownloadWorker(QObject):
-    progress = pyqtSignal(str)
-    complete = pyqtSignal()
+            with dpg.group(horizontal=True):
+                with dpg.group():
+                    dpg.add_text("Gráficos")
+                    with dpg.child_window() as chart_window:
+                        self.chart_window = chart_window
 
-    def download(self, url, resolution, path):
-        try:
-            self.download_yt_video(url, resolution, path)
-        except RegexMatchError:
-            self.download_playlist_videos(url, resolution, path)
-        finally:
-            self.complete.emit()
+                with dpg.group():
+                    dpg.add_text("Layout da Memória")
+                    with dpg.child_window() as layout_window:
+                        self.layout_window = layout_window
 
-    def download_yt_video(self, url, resolution, path):
-        video = YouTube(url)
-        self.progress.emit(f'Downloading: {video.title}')
-        if resolution == 'Audio Only':
-            video.streams.get_audio_only().download(path)
-        elif resolution == 'Highest Resolution':
-            video.streams.get_highest_resolution().download(path)
-        elif resolution == 'Lowest Resolution':
-            video.streams.get_lowest_resolution().download(path)
-        else:
-            video.streams.get_by_resolution(resolution).download(path)
+        dpg.set_viewport_resize_callback(self.on_viewport_resize)
+        dpg.create_viewport(title="MEMSIM", width=width, height=height)
 
-    def download_playlist_videos(self, url, resolution, path):
-        try:
-            playlist = Playlist(url)
-            for video in playlist.videos:
-                self.download_yt_video(video.watch_url, resolution, path)
-        except AttributeError:
-            channel = Channel(url)
-            for video in channel.videos:
-                self.download_yt_video(video.watch_url, resolution, path)
+        dpg.configure_item(self.chart_window, width=get_left_width())
+        dpg.configure_item(self.layout_window, width=-1)
 
+        dpg.setup_dearpygui()
+        dpg.show_viewport()
+        dpg.set_primary_window(self.main_window, True)
 
-class YoutubeDownloader(QWidget):
-    download_start = pyqtSignal(str, str, str)
+        return self
+    
+    def update_simulation(self):
+        pass
 
-    def __init__(self):
-        super().__init__()
-        self.line = None
-        self.combo = None
-        self.button = None
-        self.label = None
-        self.path = None
-        self.worker = None
-        self.thread = None
-        self.init_ui()
+    def run_simulation(self):
+        last_time = time.perf_counter()
 
-    def init_ui(self):
-        self.line = QLineEdit()
-        self.line.setPlaceholderText('Paste the video/playlist/channel url')
+        while dpg.is_dearpygui_running():
+            now = time.perf_counter()
+            if now - last_time >= self.step_speed:
+                self.update_simulation()
+                last_time = now
 
-        self.combo = QComboBox()
-        self.combo.addItems(['Audio Only', 'Highest Resolution', 'Lowest Resolution'])
+            dpg.render_dearpygui_frame()
 
-        self.button = QPushButton('Download')
-        self.button.clicked.connect(self.download)
+    def step_speed_callback(self, sender, app_data, user_data):
+        self.step_speed = user_data["step_speed"]
 
-        self.label = QLabel('<a href=http://www.github.com/pedro7><font color="black">github.com/pedro7</font></a>')
-        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.label.setOpenExternalLinks(True)
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        dpg.destroy_context()
 
-        top_layout = QHBoxLayout()
-        top_layout.addWidget(self.line)
-        top_layout.addWidget(self.combo)
+    def on_viewport_resize(self):
+        dpg.configure_item(self.chart_window, width=get_left_width())
 
-        bottom_layout = QVBoxLayout()
-        bottom_layout.addWidget(self.button)
-        bottom_layout.addWidget(self.label)
+    def load_init_file(self, file_path):
+        if self.memsim:
+            self.memsim.stop_simulation()
 
-        layout = QVBoxLayout()
-        layout.addLayout(top_layout)
-        layout.addLayout(bottom_layout)
+        self.memsim = MEMSIM(file_path)
+        self.mem_state = self.memsim.get_state()
+    
+    def search_init_file(self):
+        root = Tk()
+        root.withdraw()
 
-        self.setWindowTitle('YouTube Downloader')
-        self.setFixedSize(500, 96)
-        self.setLayout(layout)
-        self.show()
+        file_path = filedialog.askopenfilename(
+            title="Select a file",
+            filetypes=(("All files", "*.json"), ("Text files", "*.txt"))
+        )
 
-    def download(self):
-        if not self.path:
-            self.path = QFileDialog().getExistingDirectory()
+        root.destroy()
 
-        if not self.path:
-            return
+        if file_path:
+            return file_path
 
-        self.button.setEnabled(False)
-
-        self.worker = DownloadWorker()
-        self.thread = QThread()
-        self.worker.moveToThread(self.thread)
-
-        self.download_start.connect(self.worker.download)
-        self.worker.progress.connect(self.set_label)
-        self.worker.complete.connect(lambda: self.set_label(
-            '<a href=http://www.github.com/pedro7><font color="black">github.com/pedro7</font></a>'
-        ))
-        self.worker.complete.connect(self.worker.deleteLater)
-        self.worker.complete.connect(self.thread.quit)
-        self.worker.complete.connect(self.thread.deleteLater)
-        self.worker.complete.connect(lambda: self.button.setEnabled(True))
-
-        self.thread.start()
-
-        url = self.line.text()
-        resolution = self.combo.currentText()
-        self.download_start.emit(url, resolution, self.path)
-
-    def set_label(self, text):
-        self.label.setText(text)
-
-
-def app():
-    app = QApplication([])
-    app.setStyle('Fusion')
-    youtube_downloader = YoutubeDownloader()
-    exit(app.exec())
-
-
-if __name__ == '__main__':
-    app()
+    def load_init_file_callback(self, sender, app_data, user_data):
+        file_path = self.search_init_file()
+        self.load_init_file(file_path)
