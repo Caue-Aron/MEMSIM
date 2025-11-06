@@ -1,6 +1,15 @@
 from typing import Union
 import dearpygui.dearpygui as dpg
 
+def create_stack_theme():
+    with dpg.theme() as stack_theme:
+        with dpg.theme_component(dpg.mvButton):
+            dpg.add_theme_color(dpg.mvThemeCol_Button, (0, 0, 0, 0))
+            dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (0, 0, 0, 0))
+            dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (0, 0, 0, 0))
+
+    return stack_theme
+
 def create_theme_imgui_light() -> Union[str, int]:
     with dpg.theme() as theme_id:
         with dpg.theme_component(dpg.mvButton, enabled_state=False):
