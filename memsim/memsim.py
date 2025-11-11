@@ -37,7 +37,8 @@ class MEMSIM:
             else:
                 self.script[pid] = program["timestamps"]
 
-        self.prepare_next_step()
+        if self.auto:
+            self.prepare_next_step()
 
     def get_state(self) -> Memory:
         return self.os.ram
