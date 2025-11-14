@@ -1,6 +1,6 @@
 {
     "setup": {
-        "ram_size": 1024,
+        "ram_size": 512,
         "disc_size": 262144,
         "target_fps": 120
     },
@@ -35,41 +35,6 @@
                         "pop": 1
                     },
                     "7": {
-                        "terminate": 0
-                    }
-                }
-            },
-            {
-                "initialize": {
-                    "header": "0b0000000000010000",
-                    "data": [
-                        "0x0A0A",
-                        "0x0B0B"
-                    ]
-                },
-                "timestamps": {
-                    "1": {
-                        "insert": [
-                            "0x0C0C",
-                            "0x0D0D"
-                        ]
-                    },
-                    "2": {
-                        "insert": [
-                            "0x0E0E"
-                        ]
-                    },
-                    "4": {
-                        "pop": 3
-                    },
-                    "6": {
-                        "insert": [
-                            "0x0F0F",
-                            "0x1010",
-                            "0x1111"
-                        ]
-                    },
-                    "9": {
                         "terminate": 0
                     }
                 }

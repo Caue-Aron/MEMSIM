@@ -42,7 +42,6 @@ class OS:
             if not existing_id:
                 return i
 
-
     def load_program(self, program:Program) -> int:
         lowest_id = self._search_lowest_id()
         self.ids.append({"id": lowest_id, "storage": ID_IN_RAM})
