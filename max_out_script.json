@@ -1,6 +1,6 @@
 {
     "setup": {
-        "ram_size": 512,
+        "ram_size": 12,
         "disc_size": 262144,
         "target_fps": 120
     },
@@ -10,7 +10,7 @@
                 "initialize": {
                     "header": "0b0000000000000001",
                     "data": [
-                        "0x1111"
+                        "0x0000"
                     ]
                 },
                 "timestamps": {

@@ -19,7 +19,7 @@ class Memory:
         block_end = block.index + block.size
         index = block.index
         size = block.size
-        
+ 
         if size < len(program_bytes):
             raise MSNotEnoughMemory(self.main_memory, self.memory_layout, size)
 

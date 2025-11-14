@@ -2,7 +2,7 @@ import json
 
 ini_json = {
     "setup": {
-        "ram_size": 512,
+        "ram_size": 12,
         "disc_size": 262144,
         "target_fps": 120
     },

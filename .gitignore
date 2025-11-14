@@ -7,3 +7,10 @@ __pycache__/
 venv/
 env/
 ui.txt
+
+*.swp
+*.un
+*.swo
+*.swn
+*.*~
+tags

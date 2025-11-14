@@ -173,6 +173,10 @@ class MEMSIMUI:
         self.update_hole_programs()
         self.rebuild_mem_stack()
 
+    def stop_sim_abruptly(self, sender, app_data, user_data):
+        dpg.configure_item(user_data["modal"], show=False)
+        self.stop_sim()
+
     def run_simulation(self):
         last_time = time.perf_counter()
         self.start_time = last_time   # store when the simulation started
@@ -187,8 +191,12 @@ class MEMSIMUI:
                     try:
                         self.update_simulation()
                     except MemSimError as e:
-                        with dpg.window(label="Erro de Memória", modal=True, no_resize=True, no_move=True, show=False, height=-1) as modal:
+                        with dpg.window(
+                                label="Erro de Memória", modal=True,
+                                no_resize=True, no_move=True, 
+                                show=False, height=-1, no_close=False) as modal:
                             dpg.add_text(f"{str(e)}")
+                            dpg.add_button(label="Fechar", callback=self.stop_sim_abruptly, user_data={"modal":modal})
 
                         dpg.configure_item(
                             modal,
@@ -264,6 +272,7 @@ class MEMSIMUI:
                 )
     
     def stop_sim(self):
+        self.is_sim_running = False
         dpg.set_value(self.chart_mem_usage, [[0], [0]])
         dpg.fit_axis_data('uso_memoria_x_axis')
         dpg.fit_axis_data('uso_memoria_y_axis')

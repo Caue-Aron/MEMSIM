@@ -23,13 +23,15 @@ class OS:
         memory_block = memory.get_next_free_block(p_size)
         if memory_block:
             memory.swap_in(Segment(PROGRAM, memory_block.index, memory_block.size), p_bytes)
+            return
 
         elif memory is self.ram and memory.get_total_unallocated_memory() >= p_size:
             self.shrink_ram()
-            self._load_program_mem(memory, program)
-            
-        else:
-            raise MSNotEnoughMemory(memory.main_memory, memory.memory_layout, p_size)
+            memory_block = memory.get_next_free_block(p_size)
+            memory.swap_in(Segment(PROGRAM, memory_block.index, memory_block.size), p_bytes)
+            return
+
+        raise MSNotEnoughMemory(memory.main_memory, memory.memory_layout, p_size)
         
     def _search_lowest_id(self):
         if not self.ids:
@@ -137,8 +139,7 @@ class OS:
                 self._load_program_mem(self.ram, Program(bytes_to_move))
 
             else:
-                pass
-                # self.ram.get_total_unallocated_memory() >= b_size
+                raise MSNotEnoughMemory(self.ram, self.ram.memory_layout, realloc_size)
     
     def pop_bytes_program(self, pid:int, amount:int) -> List[Byte]:
         popped_bytes = self.ram.swap_out(pid)
