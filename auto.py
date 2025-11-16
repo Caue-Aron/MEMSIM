@@ -26,5 +26,5 @@ for i in range(1, 512):
     timestamp[f"{i}"] = {"insert": [f"0x1111"]}
     
         
-with open("max_out_script.json", "w") as max_out_json:
+with open("memsim/configs/max_out_script.json", "w") as max_out_json:
     json.dump(ini_json, max_out_json, indent=4)

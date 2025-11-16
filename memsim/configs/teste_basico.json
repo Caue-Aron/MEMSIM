@@ -1,0 +1,22 @@
+{
+    "setup": {
+        "ram_size": 128,
+        "disc_size": 256
+    },
+    "script": {
+        "programs": [
+            {
+                "initialize": { "data": [10, 20, 30, 40, 50, 60, 70, 80, 90, 100] },
+                "timestamps": {
+                    "10": { "terminate": 0 }
+                }
+            },
+            {
+                "initialize": { "data": [11, 22, 33, 44, 55, 66, 77, 88, 99, 110] },
+                "timestamps": {
+                    "20": { "terminate": 0 }
+                }
+            }
+        ]
+    }
+}
