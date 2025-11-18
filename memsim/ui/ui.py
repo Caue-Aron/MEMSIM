@@ -47,20 +47,20 @@ class MEMSIMUI:
                     dpg.add_menu_item(label="Sair")
 
                 with dpg.menu(label="Ferramentas"):
-                    dpg.add_menu_item(label="Rodar Simulação", shortcut="| F5", callback=self.start_sim_callback)
-                    dpg.add_menu_item(label="Avançar", shortcut="| F8", callback=self.advance_sim_callback)
-                    dpg.add_menu_item(label="Pausar Simulação", shortcut="| F6", callback=self.pause_sim_callback)
-                    dpg.add_menu_item(label="Parar Simulação", shortcut="| F7", callback=self.stop_sim_callback)
+                    dpg.add_menu_item(label="Rodar Simulação", callback=self.start_sim_callback)
+                    dpg.add_menu_item(label="Avançar", callback=self.advance_sim_callback)
+                    dpg.add_menu_item(label="Pausar Simulação", callback=self.pause_sim_callback)
+                    dpg.add_menu_item(label="Parar Simulação", callback=self.stop_sim_callback)
                     dpg.add_separator()
                     
                     with dpg.menu(label="Definir Velocidade"):
-                        dpg.add_menu_item(label="0.25s", shortcut="| Ctrl+1", callback=self.step_speed_callback, user_data={"step_speed":0.25})
-                        dpg.add_menu_item(label="0.5s", shortcut="| Ctrl+2", callback=self.step_speed_callback, user_data={"step_speed":0.5})
-                        dpg.add_menu_item(label="1s", shortcut="| Ctrl+3", callback=self.step_speed_callback, user_data={"step_speed":1})
-                        dpg.add_menu_item(label="2s", shortcut="| Ctrl+4", callback=self.step_speed_callback, user_data={"step_speed":2})
-                        dpg.add_menu_item(label="3s", shortcut="| Ctrl+5", callback=self.step_speed_callback, user_data={"step_speed":3})
-                        dpg.add_menu_item(label="4s", shortcut="| Ctrl+6", callback=self.step_speed_callback, user_data={"step_speed":4})
-                        dpg.add_menu_item(label="5s", shortcut="| Ctrl+7", callback=self.step_speed_callback, user_data={"step_speed":5})
+                        dpg.add_menu_item(label="0.25s", callback=self.step_speed_callback, user_data={"step_speed":0.25})
+                        dpg.add_menu_item(label="0.5s", callback=self.step_speed_callback, user_data={"step_speed":0.5})
+                        dpg.add_menu_item(label="1s", callback=self.step_speed_callback, user_data={"step_speed":1})
+                        dpg.add_menu_item(label="2s", callback=self.step_speed_callback, user_data={"step_speed":2})
+                        dpg.add_menu_item(label="3s", callback=self.step_speed_callback, user_data={"step_speed":3})
+                        dpg.add_menu_item(label="4s", callback=self.step_speed_callback, user_data={"step_speed":4})
+                        dpg.add_menu_item(label="5s", callback=self.step_speed_callback, user_data={"step_speed":5})
 
 
             with dpg.group(horizontal=True):
@@ -154,7 +154,13 @@ class MEMSIMUI:
                         dpg.add_button(label=f"{segment.type}\nIndex: {segment.index}\nSize: {segment.size}", height=height)
 
     def advance_sim_callback(self):
-        self.advance_sim = True        
+        if self.memsim is None:
+            self.start_sim()
+            self.is_sim_running = False
+            self.elapsed_time = -1
+            
+        self.advance_sim = True      
+        self.elapsed_time += 1
 
     def update_hole_programs(self):
         total_mem = self.mem_state.memory_size
@@ -185,7 +191,7 @@ class MEMSIMUI:
     def run_simulation(self):
         last_time = time.perf_counter()
         self.start_time = last_time   # store when the simulation started
-        self.elapsed_time = 0.0       # running total
+        self.elapsed_time = 0.0     # running total
 
         while dpg.is_dearpygui_running():
             if self.is_sim_running or self.advance_sim:
@@ -285,6 +291,7 @@ class MEMSIMUI:
         dpg.fit_axis_data('uso_memoria_y_axis')
         dpg.set_axis_limits("uso_memoria_y_axis", 0, 1)
         dpg.set_axis_limits("uso_memoria_x_axis", 0, 1)
+        self.memsim = None
             
     def pause_sim(self):
         self.is_sim_running = False
