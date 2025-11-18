@@ -76,11 +76,17 @@ class MEMSIM:
             param = None
 
             if choice == INSERT:
-                allocation_size = random.randrange(1, int(unallocated_memory / number_programs))
+                segs = self.os.ram.get_all_segments_of_type("HOLE")
+                seg_choices = list()
+                for idx, hole in segs:
+                    seg_choices.append(hole.size)
+                    
+                allocation_size = random.choice(seg_choices)
                 if allocation_size + allocated_memory >= ram_size:
                     continue
                 
-                param = [random.randrange(0, Byte.MAX) for _ in range(0, allocation_size)]
+                stride = random.randint(1, allocation_size)
+                param = [random.randrange(0, Byte.MAX) for _ in range(int(stride*0.40))]
                 unallocated_memory -= allocation_size
                 
             elif choice == POP:
@@ -110,7 +116,7 @@ class MEMSIM:
                     self.script[new_pid] = dict()
 
         elif random.randrange(0, number_programs) == 0:
-            allocation_size = random.randrange(1, int(unallocated_memory / number_programs))
+            allocation_size = random.randrange(1, int(ram_size/16))
             if allocation_size + allocated_memory < ram_size:
                 new_program_bytes = [random.randrange(0, Byte.MAX) for _ in range(0, allocation_size)]
                 unallocated_memory -= allocation_size
