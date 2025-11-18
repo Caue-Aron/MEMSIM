@@ -29,6 +29,7 @@ class MEMSIMUI:
         self.step_speed = 1
         self.mem_state = None
         self.memsim = None
+        self.advance_sim = False
 
         self.chart_window = None
         self.layout_window = None
@@ -47,6 +48,7 @@ class MEMSIMUI:
 
                 with dpg.menu(label="Ferramentas"):
                     dpg.add_menu_item(label="Rodar Simulação", shortcut="| F5", callback=self.start_sim_callback)
+                    dpg.add_menu_item(label="Avançar", shortcut="| F8", callback=self.advance_sim_callback)
                     dpg.add_menu_item(label="Pausar Simulação", shortcut="| F6", callback=self.pause_sim_callback)
                     dpg.add_menu_item(label="Parar Simulação", shortcut="| F7", callback=self.stop_sim_callback)
                     dpg.add_separator()
@@ -151,6 +153,9 @@ class MEMSIMUI:
                     else:
                         dpg.add_button(label=f"{segment.type}\nIndex: {segment.index}\nSize: {segment.size}", height=height)
 
+    def advance_sim_callback(self):
+        self.advance_sim = True        
+
     def update_hole_programs(self):
         total_mem = self.mem_state.memory_size
         self.unallocated_mem = int(self.mem_state.get_total_unallocated_memory() / total_mem * 100)
@@ -183,7 +188,7 @@ class MEMSIMUI:
         self.elapsed_time = 0.0       # running total
 
         while dpg.is_dearpygui_running():
-            if self.is_sim_running:
+            if self.is_sim_running or self.advance_sim:
                 now = time.perf_counter()
                 self.elapsed_time = now - self.start_time  # total time passed since start
 
@@ -206,6 +211,8 @@ class MEMSIMUI:
                         )
 
                     last_time = now
+
+                self.advance_sim = False 
 
             dpg.render_dearpygui_frame()
 
