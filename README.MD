@@ -89,8 +89,8 @@ Processo de defragmentação:
 ## Simulação Automática
 
 1. Escolha a opção Carregar Simulação Automática
-2. Escolha a opção Rodar Simulação
-3. Pause, pare e defina a velocidade dos ticks utilizando, respectivamente, as opções Pausar Simulação, Parar Simulação e Definir Velocidade
+2. Pressione F5 para rodar a simulação
+3. Pause, pare e defina a velocidade dos ticks utilizando, respectivamente, as teclas F6, F7 e CTRL+1 até CTRL+7
 
 ## Simulação Roteirizada
 
@@ -129,5 +129,5 @@ Processo de defragmentação:
 - Em cada programa, utilize o objeto `initialize` para definir os bytes com qual o programa será criado.
 - Em cada programa, utilize o objeto `timestamps` para definir a ação que ocorrerá a cada intervalo de tempo.
 
-3. Escolha a opção Rodar Simulação
-4. Pause, pare e defina a velocidade dos ticks utilizando, respectivamente, as opções Pausar Simulação, Parar Simulação e Definir Velocidade
+3. Pressione F5 para rodar a simulação
+4. Pause, pare e defina a velocidade dos ticks utilizando, respectivamente, as teclas F6, F7 e CTRL+1 até CTRL+7

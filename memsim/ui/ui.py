@@ -47,21 +47,20 @@ class MEMSIMUI:
                     dpg.add_menu_item(label="Sair")
 
                 with dpg.menu(label="Ferramentas"):
-                    dpg.add_menu_item(label="Rodar Simulação", callback=self.start_sim_callback)
-                    dpg.add_menu_item(label="Avançar", callback=self.advance_sim_callback)
-                    dpg.add_menu_item(label="Pausar Simulação", callback=self.pause_sim_callback)
-                    dpg.add_menu_item(label="Parar Simulação", callback=self.stop_sim_callback)
+                    dpg.add_menu_item(label="Rodar Simulação", shortcut="F5", callback=self.start_sim_callback)
+                    dpg.add_menu_item(label="Avançar", shortcut="F8", callback=self.advance_sim_callback)
+                    dpg.add_menu_item(label="Pausar Simulação", shortcut="F6", callback=self.pause_sim_callback)
+                    dpg.add_menu_item(label="Parar Simulação", shortcut="F7", callback=self.stop_sim_callback)
                     dpg.add_separator()
-                    
-                    with dpg.menu(label="Definir Velocidade"):
-                        dpg.add_menu_item(label="0.25s", callback=self.step_speed_callback, user_data={"step_speed":0.25})
-                        dpg.add_menu_item(label="0.5s", callback=self.step_speed_callback, user_data={"step_speed":0.5})
-                        dpg.add_menu_item(label="1s", callback=self.step_speed_callback, user_data={"step_speed":1})
-                        dpg.add_menu_item(label="2s", callback=self.step_speed_callback, user_data={"step_speed":2})
-                        dpg.add_menu_item(label="3s", callback=self.step_speed_callback, user_data={"step_speed":3})
-                        dpg.add_menu_item(label="4s", callback=self.step_speed_callback, user_data={"step_speed":4})
-                        dpg.add_menu_item(label="5s", callback=self.step_speed_callback, user_data={"step_speed":5})
 
+                    with dpg.menu(label="Definir Velocidade"):
+                        dpg.add_menu_item(label="0.25s", shortcut="Ctrl+1", callback=self.step_speed_callback, user_data={"step_speed":0.25})
+                        dpg.add_menu_item(label="0.5s",  shortcut="Ctrl+2", callback=self.step_speed_callback, user_data={"step_speed":0.5})
+                        dpg.add_menu_item(label="1s",    shortcut="Ctrl+3", callback=self.step_speed_callback, user_data={"step_speed":1})
+                        dpg.add_menu_item(label="2s",    shortcut="Ctrl+4", callback=self.step_speed_callback, user_data={"step_speed":2})
+                        dpg.add_menu_item(label="3s",    shortcut="Ctrl+5", callback=self.step_speed_callback, user_data={"step_speed":3})
+                        dpg.add_menu_item(label="4s",    shortcut="Ctrl+6", callback=self.step_speed_callback, user_data={"step_speed":4})
+                        dpg.add_menu_item(label="5s",    shortcut="Ctrl+7", callback=self.step_speed_callback, user_data={"step_speed":5})
 
             with dpg.group(horizontal=True):
                 with dpg.group():
@@ -117,6 +116,17 @@ class MEMSIMUI:
                             dpg.bind_item_theme(table, self.stack_theme)
                             dpg.add_table_column()
 
+        # -------------- HANDLERS DE TECLADO -----------------
+
+        with dpg.handler_registry():
+            dpg.add_key_press_handler(key=dpg.mvKey_F5, callback=self.start_sim_callback)
+            dpg.add_key_press_handler(key=dpg.mvKey_F6, callback=self.pause_sim_callback)
+            dpg.add_key_press_handler(key=dpg.mvKey_F7, callback=self.stop_sim_callback)
+            dpg.add_key_press_handler(key=dpg.mvKey_F8, callback=self.advance_sim_callback)
+
+            # captura global de combinações CTRL + número
+            dpg.add_key_release_handler(callback=self._global_shortcuts)
+
         dpg.set_viewport_resize_callback(self.on_viewport_resize)
         dpg.create_viewport(title="MEMSIM", width=width, height=height)
 
@@ -128,7 +138,31 @@ class MEMSIMUI:
         dpg.set_primary_window(self.main_window, True)
 
         return self
-    
+
+    # ============================================================
+    #  GLOBAL SHORTCUTS (Ctrl + número)
+    # ============================================================
+    def _global_shortcuts(self, sender, app_data, user_data):
+        # app_data é a tecla que foi liberada
+
+        # verifica se CTRL está pressionado
+        if not dpg.is_key_down(dpg.mvKey_ModCtrl):
+            return
+
+        key = app_data
+
+        SPEEDS = {
+            dpg.mvKey_1:  0.25,
+            dpg.mvKey_2:  0.5,
+            dpg.mvKey_3:  1,
+            dpg.mvKey_4:  2,
+            dpg.mvKey_5:  3,
+            dpg.mvKey_6:  4,
+            dpg.mvKey_7:  5,
+        }
+
+    # ============================================================
+
     def rebuild_mem_stack(self):
         if dpg.does_item_exist(self.mem_stack):
             dpg.delete_item(self.mem_stack, children_only=False)
