@@ -11,6 +11,16 @@ A simulação é orientada a eventos: a cada tick o sistema processa ações com
 
 ---
 
+## Instalação
+
+1. Clone o repositório
+2. Na pasta raiz, execute o comando `pip install -r .\requirements.txt` para instalar as dependências.
+3. Na pasta raiz, execute o comando `python memsim_tests.py` para iniciar a aplicação.
+
+Caso ocorra algum erro nas dependências, utilize o comando `python -m venv venv` e logo em seguida `.\venv\Scripts\activate`, repita o passo 2.
+
+---
+
 ## Arquitetura e Componentes
 
 | Arquivo | Responsabilidade                                                     |
